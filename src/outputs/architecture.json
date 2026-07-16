@@ -1,0 +1,418 @@
+{
+  "summary": {
+    "architectureStyle": "Hybrid",
+    "complexity": "S",
+    "rationale": "The project involves a public-facing landing page focused on lead capture. A Hybrid architecture combines the benefits of a SPA (rich user experience, fast interactions) for the frontend with a serverless backend for lead processing. This optimizes for maintainability, scalability, and cost efficiency for a small-to-medium complexity marketing site, allowing for good SEO characteristics via Static Site Generation (SSG) for initial content and dynamic client-side interactions. This approach minimizes operational overhead while providing a modern user experience."
+  },
+  "technologies": [
+    {
+      "category": "Frontend Framework",
+      "name": "React",
+      "version": "18.x",
+      "reason": "React is a widely adopted, component-based library ideal for building interactive Single Page Applications (SPAs). It offers excellent developer experience, a large ecosystem, and strong community support, ensuring maintainability and access to extensive tooling.",
+      "alternativesConsidered": ["Vue.js", "Angular", "Svelte"]
+    },
+    {
+      "category": "Frontend Build Tool",
+      "name": "Vite",
+      "version": "4.x",
+      "reason": "Vite provides extremely fast cold start times and hot module reloading (HMR) for development, significantly improving developer experience. Its build output is highly optimized for production, contributing to faster load times for the landing page.",
+      "alternativesConsidered": ["Create React App (CRA)", "Webpack"]
+    },
+    {
+      "category": "Backend Runtime",
+      "name": "Node.js",
+      "version": "18.x",
+      "reason": "Node.js is efficient for I/O-bound operations common in API services. Its asynchronous nature is well-suited for serverless functions, aligning with the chosen backend strategy. The JavaScript ecosystem also allows for full-stack consistency.",
+      "alternativesConsidered": ["Python (Flask)", "Go (Gin)", "Ruby (Rails)"]
+    },
+    {
+      "category": "Backend Framework",
+      "name": "Express.js (integrated with Serverless)",
+      "version": "4.x",
+      "reason": "Express.js is a minimalist, flexible Node.js web application framework. It provides a robust set of features for web and mobile applications and is easily adaptable for serverless functions, handling API routing and middleware efficiently.",
+      "alternativesConsidered": ["NestJS", "Fastify"]
+    },
+    {
+      "category": "Database",
+      "name": "PostgreSQL",
+      "version": "14.x",
+      "reason": "PostgreSQL is a robust, open-source relational database known for its reliability, data integrity (ACID compliance), and extensibility. It is an excellent choice for storing structured lead data, offering strong querying capabilities and transactional support for reliable lead archival.",
+      "alternativesConsidered": ["MongoDB", "MySQL", "DynamoDB"]
+    },
+    {
+      "category": "ORM",
+      "name": "Prisma",
+      "version": "5.x",
+      "reason": "Prisma provides a type-safe database client, an intuitive schema definition language, and powerful migrations. It significantly enhances developer experience, reduces common database-related errors, and offers excellent integration with TypeScript for both backend and database interactions.",
+      "alternativesConsidered": ["Sequelize", "TypeORM", "Knex.js"]
+    },
+    {
+      "category": "Cloud Provider",
+      "name": "AWS",
+      "version": "N/A",
+      "reason": "AWS offers a comprehensive suite of services (Lambda, API Gateway, RDS, S3, CloudFront) that provide a scalable, reliable, and cost-effective infrastructure for a hybrid application. Its serverless offerings are particularly well-suited for the backend's lead forwarding module.",
+      "alternativesConsidered": [
+        "Google Cloud Platform (GCP)",
+        "Microsoft Azure"
+      ]
+    },
+    {
+      "category": "Frontend Hosting/CDN",
+      "name": "Vercel",
+      "version": "N/A",
+      "reason": "Vercel provides zero-configuration deployment for React applications, built-in global CDN, automatic SSL, and serverless functions (which can host the React app). It simplifies frontend deployment and ensures high performance and scalability for the landing page.",
+      "alternativesConsidered": ["Netlify", "AWS Amplify", "Cloudflare Pages"]
+    },
+    {
+      "category": "CI/CD",
+      "name": "GitHub Actions",
+      "version": "N/A",
+      "reason": "GitHub Actions is natively integrated with GitHub repositories, providing a powerful and flexible CI/CD pipeline. It simplifies automating build, test, and deployment workflows for both frontend and backend components.",
+      "alternativesConsidered": ["GitLab CI/CD", "CircleCI", "AWS CodePipeline"]
+    },
+    {
+      "category": "Logging",
+      "name": "AWS CloudWatch / Vercel Logs",
+      "version": "N/A",
+      "reason": "CloudWatch provides centralized logging and monitoring for AWS Lambda functions, enabling easy troubleshooting and performance analysis. Vercel's integrated logging covers frontend deployments and associated serverless functions.",
+      "alternativesConsidered": ["ELK Stack", "Datadog", "Splunk"]
+    },
+    {
+      "category": "Analytics",
+      "name": "Google Analytics",
+      "version": "GA4",
+      "reason": "Google Analytics is an industry-standard, free web analytics service that provides comprehensive insights into user behavior, traffic sources, and conversion tracking crucial for optimizing a marketing landing page.",
+      "alternativesConsidered": ["Matomo", "Fathom Analytics"]
+    },
+    {
+      "category": "Testing",
+      "name": "Jest / React Testing Library",
+      "version": "29.x",
+      "reason": "Jest is a popular JavaScript testing framework, and React Testing Library provides utilities for testing React components in a way that encourages good testing practices. This combination ensures robust unit and integration testing for both frontend and backend.",
+      "alternativesConsidered": ["Cypress (E2E)", "Mocha/Chai", "Vitest"]
+    },
+    {
+      "category": "Runtime Type Checking/Validation",
+      "name": "Zod",
+      "version": "3.x",
+      "reason": "Zod is a TypeScript-first schema declaration and validation library. It provides excellent type inference, making it robust for validating API request bodies and ensuring data integrity on the backend.",
+      "alternativesConsidered": ["Joi", "Yup"]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "CAP001",
+      "name": "Content Display",
+      "description": "Ability to present static and dynamic informational content to website visitors, including headlines, visuals, and textual value propositions.",
+      "modules": ["MOD001"]
+    },
+    {
+      "id": "CAP002",
+      "name": "Lead Generation",
+      "description": "Functionality to capture visitor contact information through a form and confirm successful submission.",
+      "modules": ["MOD002"]
+    },
+    {
+      "id": "CAP003",
+      "name": "Lead Management & Delivery",
+      "description": "Securely process and transmit captured lead data to external systems for follow-up and archival.",
+      "modules": ["MOD003"]
+    }
+  ],
+  "modules": [
+    {
+      "id": "MOD001",
+      "name": "Landing Page Content",
+      "responsibility": "To render and manage the static and dynamic content elements of the landing page, including hero sections, value propositions, and agent/company information.",
+      "capability": "CAP001",
+      "layer": "Frontend",
+      "dependencies": ["MOD002"],
+      "exposes": [
+        "HeroSectionComponent",
+        "ValuePropositionComponent",
+        "AgentInfoComponent"
+      ],
+      "consumes": [],
+      "notes": [
+        "This module primarily handles UI presentation.",
+        "Content can be hardcoded or fetched if a CMS were integrated later."
+      ]
+    },
+    {
+      "id": "MOD002",
+      "name": "Lead Capture",
+      "responsibility": "To provide the user interface for lead information input, perform client-side validation, and handle the submission of lead data to the backend, displaying appropriate feedback.",
+      "capability": "CAP002",
+      "layer": "Frontend",
+      "dependencies": ["MOD003"],
+      "exposes": ["LeadCaptureForm", "SubmissionConfirmationMessage"],
+      "consumes": ["API/submit-lead"],
+      "notes": [
+        "Integrates with MOD001 for placement and MOD003 for data submission.",
+        "Includes client-side form state management and validation."
+      ]
+    },
+    {
+      "id": "MOD003",
+      "name": "Lead Forwarding",
+      "responsibility": "To receive lead submissions from the frontend, validate data, archive it in the database, and then securely forward the lead information to a designated external system (e.g., email service, CRM).",
+      "capability": "CAP003",
+      "layer": "Backend",
+      "dependencies": [],
+      "exposes": ["API/submit-lead"],
+      "consumes": ["PostgreSQL Database", "External Email/CRM API"],
+      "notes": [
+        "Implemented as a serverless function for scalability and cost-efficiency.",
+        "Ensures data persistence even if external forwarding fails initially."
+      ]
+    }
+  ],
+  "frontend": {
+    "routing": "Client-Side Routing (React Router DOM) for potential future multi-page expansion, though a single page requires minimal routing.",
+    "stateManagement": "React Context API for global state if needed, primarily local component state (useState) for forms.",
+    "componentStrategy": "Atomic Design principles: smallest reusable components (atoms), combined into molecules, organisms, and templates/pages.",
+    "renderingStrategy": "Hybrid Rendering (Static Site Generation - SSG via Vercel for initial page load for SEO and performance, then Client-Side Rendering - CSR for interactive elements like the lead form).",
+    "folderStrategy": "Feature-sliced, with shared components, hooks, and utilities. Example: `src/features/lead-capture`, `src/components/shared`, `src/pages/LandingPage`."
+  },
+  "backend": {
+    "apiStyle": "RESTful API for simple and clear resource-based communication.",
+    "serviceOrganization": "Organized as a single, stateless serverless function (AWS Lambda) for the lead submission endpoint, encapsulating all business logic and external integrations.",
+    "validationStrategy": "Server-side schema validation using Zod for all incoming API requests to ensure data integrity and security, complemented by basic client-side validation for user experience.",
+    "errorHandling": "Centralized error handling middleware captures exceptions, logs details to CloudWatch, and returns standardized, user-friendly error responses to the client.",
+    "authentication": "N/A for public-facing lead submission endpoint. Access is controlled by CORS and potentially API Gateway usage plans/rate limits.",
+    "authorization": "N/A as there are no authenticated users or protected resources beyond the public lead submission."
+  },
+  "database": {
+    "type": "Relational Database (PostgreSQL)",
+    "orm": "Prisma",
+    "entities": [
+      {
+        "name": "Lead",
+        "purpose": "To store captured lead information securely and reliably for archival, auditing, and potential retry of external forwarding.",
+        "relationships": []
+      }
+    ],
+    "indexingStrategy": [
+      "Index on `submissionTimestamp` for efficient chronological retrieval and reporting.",
+      "Index on `email` for quick lookups and ensuring uniqueness if required.",
+      "Primary key index on `id`."
+    ],
+    "constraints": [
+      "NOT NULL constraints on `name`, `email`, `phone` (as per business rule BR001).",
+      "UNIQUE constraint on `email` to prevent duplicate lead entries (if desired).",
+      "UUID for `id` as primary key."
+    ]
+  },
+  "apis": [
+    {
+      "name": "Submit Lead",
+      "method": "POST",
+      "path": "/api/leads",
+      "purpose": "To receive and process new lead submissions from the frontend, archiving them and initiating the forwarding process.",
+      "module": "MOD003"
+    }
+  ],
+  "integrations": [
+    {
+      "name": "External Email/CRM System",
+      "purpose": "To forward captured lead information to a designated recipient or customer relationship management system for sales follow-up.",
+      "required": true,
+      "module": "MOD003"
+    },
+    {
+      "name": "Google Analytics",
+      "purpose": "To track user behavior, traffic sources, and conversion metrics on the landing page for marketing optimization.",
+      "required": false,
+      "module": "MOD001"
+    }
+  ],
+  "dataFlows": [
+    {
+      "id": "DF001",
+      "name": "Lead Submission Flow",
+      "steps": [
+        "Website Visitor (Client) accesses the landing page (MOD001, MOD002 Frontend).",
+        "Visitor fills out the Lead Capture Form (MOD002 Frontend).",
+        "Visitor clicks 'Submit' button (MOD002 Frontend).",
+        "Client-side validation occurs; if invalid, errors are displayed (MOD002 Frontend).",
+        "If valid, Frontend sends POST request to `/api/leads` (MOD002 Frontend -> MOD003 Backend API Gateway/Lambda).",
+        "Backend receives request via API Gateway (MOD003 Backend).",
+        "Server-side validation occurs; if invalid, an error response is sent back (MOD003 Backend).",
+        "If valid, Backend archives lead data in PostgreSQL (MOD003 Backend -> Database).",
+        "Backend attempts to forward lead data to the External Email/CRM System (MOD003 Backend -> External System).",
+        "Backend sends success/failure response to Frontend (MOD003 Backend -> MOD002 Frontend).",
+        "Frontend displays Submission Confirmation or error message to the visitor (MOD002 Frontend)."
+      ]
+    }
+  ],
+  "security": [
+    {
+      "title": "HTTPS Everywhere",
+      "description": "All communication between the client and server, and between backend services, will be encrypted using HTTPS to protect data in transit."
+    },
+    {
+      "title": "Input Validation",
+      "description": "Robust server-side validation using Zod will be applied to all incoming API requests (e.g., lead submission) to prevent injection attacks and ensure data integrity. Client-side validation will provide immediate user feedback."
+    },
+    {
+      "title": "Secrets Management",
+      "description": "Database credentials, API keys for external services, and other sensitive configurations will be stored securely using environment variables for development and AWS Secrets Manager/Parameter Store for production environments."
+    },
+    {
+      "title": "Rate Limiting",
+      "description": "API Gateway will implement rate limiting on the `/api/leads` endpoint to prevent abuse, brute-force attacks, and protect backend resources from overload."
+    },
+    {
+      "title": "Data at Rest Encryption",
+      "description": "The PostgreSQL database will be configured with data-at-rest encryption to protect sensitive lead information stored on disk."
+    },
+    {
+      "title": "Cross-Origin Resource Sharing (CORS)",
+      "description": "The backend API will be configured with strict CORS policies, only allowing requests from the hosted frontend domain to prevent unauthorized access from other origins."
+    },
+    {
+      "title": "XSS (Cross-Site Scripting) Prevention",
+      "description": "Frontend (React) will automatically escape user-provided content to prevent XSS. Backend will sanitize any output that might be rendered in a browser (though not applicable for this direct lead forwarding)."
+    }
+  ],
+  "performance": [
+    {
+      "title": "Static Site Generation (SSG)",
+      "description": "The landing page content will be pre-rendered at build time using SSG, ensuring extremely fast initial page load times and optimal SEO performance."
+    },
+    {
+      "title": "CDN for Static Assets",
+      "description": "All frontend assets (HTML, CSS, JavaScript bundles, images, videos) will be served via a Content Delivery Network (Vercel's built-in CDN) to minimize latency for users globally."
+    },
+    {
+      "title": "Image Optimization",
+      "description": "High-quality visuals will be optimized (compressed, appropriately sized, modern formats like WebP) and served responsively to reduce page load times without compromising visual fidelity."
+    },
+    {
+      "title": "Gzip/Brotli Compression",
+      "description": "All network responses (frontend assets, API responses) will be served with Gzip or Brotli compression to reduce data transfer size and speed up delivery."
+    },
+    {
+      "title": "Database Indexing",
+      "description": "Appropriate indexes will be created on the `Lead` table (`submissionTimestamp`, `email`) to ensure fast data retrieval and insertion performance."
+    }
+  ],
+  "scalability": {
+    "currentTarget": "Handle thousands of unique visitors per day with potential spikes during marketing campaigns, efficiently processing hundreds of lead submissions per hour.",
+    "scalingStrategy": "The architecture is designed for horizontal scaling. The frontend (React on Vercel) automatically scales based on traffic. The backend (AWS Lambda + API Gateway) is inherently serverless, providing automatic scaling of compute resources in response to demand without manual intervention. The PostgreSQL database (AWS RDS) can be scaled vertically (instance size) or horizontally (read replicas) if needed.",
+    "bottlenecks": [
+      "Rate limits or performance of the external Email/CRM system used for lead forwarding.",
+      "Database write capacity if lead submission volume becomes extremely high (unlikely for a landing page, but monitorable).",
+      "Potential cold starts of AWS Lambda functions during periods of inactivity, though mitigated by API Gateway warm-up strategies if necessary."
+    ]
+  },
+  "deployment": {
+    "frontend": "Vercel, utilizing its integrated build system, global CDN, and automatic SSL for optimal performance and developer experience.",
+    "backend": "AWS Lambda functions managed via AWS API Gateway, deploying a single serverless function for lead processing.",
+    "database": "AWS RDS (Relational Database Service) for managed PostgreSQL instance, ensuring high availability and automated backups.",
+    "storage": "AWS S3 for any raw assets that might be uploaded (e.g., images for the landing page itself, if not bundled with the frontend). Not for lead data.",
+    "cdn": "Vercel's built-in global CDN for frontend assets, and potentially AWS CloudFront if additional static assets are served directly from S3."
+  },
+  "monitoring": {
+    "logging": "Centralized logging using AWS CloudWatch for backend Lambda functions and Vercel's integrated logging for frontend deployments. This allows for unified log analysis and troubleshooting.",
+    "analytics": "Google Analytics (GA4) will be integrated into the frontend to track user engagement, traffic sources, conversion rates, and other key marketing metrics.",
+    "errorTracking": "AWS CloudWatch for backend errors (Lambda invocation errors, application-level exceptions) and Sentry for frontend crash reporting and performance monitoring.",
+    "metrics": "AWS CloudWatch metrics for Lambda invocations, errors, and duration. Google Analytics for user-centric metrics. Custom metrics for lead submission success/failure rates can be pushed to CloudWatch."
+  },
+  "codingStandards": [
+    "Naming Conventions: Use PascalCase for React components and TypeScript interfaces/types, camelCase for functions, variables, and API endpoints.",
+    "Folder Organization: Frontend will use a feature-sliced approach (e.g., `src/features/lead-capture`, `src/components/shared`). Backend will use a layered approach (e.g., `src/handlers`, `src/services`, `src/repositories`, `src/validation`).",
+    "Dependency Management: Utilize npm/yarn for package management, ensuring strict versioning (`package-lock.json`/`yarn.lock`). Avoid unnecessary dependencies.",
+    "Error Handling: Implement centralized error handling middleware on the backend to catch unhandled exceptions and return consistent error responses. Use React Error Boundaries for frontend resilience.",
+    "Validation: Enforce server-side input validation using Zod. Implement client-side validation for immediate user feedback.",
+    "Documentation: Use JSDoc/TSDoc for public functions, components, and API endpoints. Maintain clear README files for each major module/service.",
+    "Testing: Mandate unit and integration tests using Jest and React Testing Library for adequate code coverage and reliability. Aim for >80% code coverage for critical paths.",
+    "Type Safety: Full adoption of TypeScript for both frontend and backend development to improve code quality, maintainability, and reduce runtime errors."
+  ],
+  "architectureDecisions": [
+    {
+      "id": "ADR001",
+      "title": "Architecture Style: Hybrid (SSG Frontend + Serverless Backend)",
+      "decision": "Adopt a Hybrid architecture, utilizing Static Site Generation (SSG) for the frontend to optimize initial page load performance and SEO, coupled with a serverless backend for lead processing.",
+      "rationale": "This approach offers the best balance for a marketing landing page: excellent initial load speed and SEO benefits from SSG for static content, combined with the scalability, cost-efficiency, and minimal operational overhead of a serverless function for dynamic lead capture and forwarding. It avoids the complexity of a full SSR or a persistent server setup for a simple application.",
+      "alternatives": [
+        "Pure SPA (CSR)",
+        "Server-Side Rendering (SSR)",
+        "Traditional Monolith"
+      ],
+      "consequences": [
+        "Fast initial page load and improved SEO for static content.",
+        "Cost-effective and highly scalable backend for lead processing.",
+        "Reduced infrastructure maintenance burden.",
+        "Potentially increased build times for large SSG content (not applicable here).",
+        "Requires coordination between frontend build/deployment (Vercel) and backend deployment (AWS Lambda)."
+      ]
+    },
+    {
+      "id": "ADR002",
+      "title": "Frontend Framework & Hosting: React with Vite and Vercel",
+      "decision": "Utilize React as the frontend framework, Vite for the build tool, and Vercel for hosting and deployment.",
+      "rationale": "React provides a robust, component-based approach ideal for building interactive UIs, with a strong ecosystem and community. Vite offers superior developer experience (fast HMR) and optimized builds. Vercel integrates seamlessly with React/Vite, offering zero-config deployment, built-in CDN, SSL, and excellent performance, simplifying frontend operations and ensuring global reach for the landing page.",
+      "alternatives": [
+        "Vue.js / Nuxt.js on Netlify",
+        "Angular on AWS Amplify",
+        "Vanilla JS with custom build process"
+      ],
+      "consequences": [
+        "High developer productivity and maintainability.",
+        "Excellent frontend performance and scalability via Vercel's CDN.",
+        "Streamlined CI/CD process with Vercel's Git integration.",
+        "Potential vendor lock-in with Vercel for optimal features (though standard output is portable).",
+        "Learning curve for developers unfamiliar with React."
+      ]
+    },
+    {
+      "id": "ADR003",
+      "title": "Backend Technology: AWS Lambda with API Gateway (Node.js)",
+      "decision": "Implement the backend lead forwarding logic as an AWS Lambda function, exposed via AWS API Gateway, using Node.js.",
+      "rationale": "For a single-purpose API endpoint (lead submission), a serverless approach with AWS Lambda and API Gateway is optimal. It offers automatic scaling, pay-per-execution pricing (highly cost-effective for variable traffic), high availability, and minimal operational overhead. Node.js is chosen for its efficiency in I/O operations and consistency with the frontend's JavaScript ecosystem.",
+      "alternatives": [
+        "Dedicated Node.js server on EC2",
+        "Google Cloud Functions",
+        "Azure Functions"
+      ],
+      "consequences": [
+        "Highly scalable and cost-effective backend.",
+        "Reduced server management and maintenance.",
+        "Potential for 'cold starts' during periods of inactivity (minor impact for this use case).",
+        "Integration complexity with AWS ecosystem (IAM, API Gateway setup)."
+      ]
+    },
+    {
+      "id": "ADR004",
+      "title": "Database for Lead Archival: PostgreSQL on AWS RDS",
+      "decision": "Employ PostgreSQL on AWS RDS for persistent storage and archival of captured lead information.",
+      "rationale": "While the primary action is lead forwarding, reliable storage of leads is crucial for auditing, retry mechanisms, and data integrity. PostgreSQL provides strong ACID compliance, ensuring that lead data is consistently and reliably stored. AWS RDS offers a managed service, simplifying database administration, backups, and scaling, providing a robust solution for critical lead data.",
+      "alternatives": [
+        "MongoDB (NoSQL)",
+        "DynamoDB (Serverless NoSQL)",
+        "Direct forwarding without database storage"
+      ],
+      "consequences": [
+        "Guaranteed persistence and integrity of lead data.",
+        "Enables auditing and retries for external forwarding failures.",
+        "Managed database service reduces operational burden.",
+        "Introduces a relational database schema, which is well-suited for structured lead data.",
+        "Additional cost for a managed database instance compared to a purely stateless forwarding mechanism."
+      ]
+    }
+  ],
+  "implementationReadiness": {
+    "ready": true,
+    "blockers": [],
+    "recommendedNextAgents": [
+      "Database Agent",
+      "Backend Agent",
+      "Frontend Agent",
+      "DevOps Agent",
+      "QA Agent",
+      "Documentation Agent"
+    ]
+  }
+}
