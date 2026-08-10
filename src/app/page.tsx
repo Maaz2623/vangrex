@@ -1,8 +1,7 @@
-import { UnRequireAuth } from "@/lib/auth-utils";
-import React from "react";
+import HomePage from "@/features/home/components/home-page";
 
-const HomePage = async () => {
-  return <div>home Page</div>;
+const Page = async () => {
+  return <HomePage />;
 };
 
-export default HomePage;
+export default Page;
