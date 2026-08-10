@@ -196,7 +196,7 @@
 
 html {
   scroll-behavior: smooth;
-
+  data-scroll-behavior: "smooth";
   /* Firefox */
   scrollbar-width: thin;
   scrollbar-color: rgba(106, 108, 245, 0.65) transparent;
