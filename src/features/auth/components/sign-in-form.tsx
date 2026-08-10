@@ -1,3 +1,5 @@
+"use client";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,80 +8,39 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { authClient } from "@/lib/auth-client";
 
 export const SignInForm = () => {
+  const handleSocialSignIn = (provider: "google" | "github") => {
+    authClient.signIn.social({
+      provider: provider,
+    });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md py-8">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-6 text-center">
           {/* Vangrex Logo */}
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary">
-            <span className="text-xl font-bold text-primary-foreground">V</span>
+          <div className="mx-auto flex size-12 items-center justify-center">
+            <Logo />
           </div>
 
           <div className="space-y-2">
             <CardTitle className="text-2xl">Create your account</CardTitle>
             <CardDescription>
-              Enter your details to get started with Vangrex.
+              Choose a provider to Sign Up with Vangrex.
             </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="John Doe"
-                autoComplete="name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
-            </div>
-
-            <Button type="submit" className="w-full">
-              Create account
-            </Button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <Button type="button" variant="outline" className="w-full">
+          <Button
+            onClick={() => handleSocialSignIn("google")}
+            type="button"
+            variant="outline"
+            className="w-full"
+          >
             <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
               <path
                 fill="currentColor"
@@ -100,6 +61,11 @@ export const SignInForm = () => {
             </svg>
             Continue with Google
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            By continuing, you agree to Vangrex&apos;s Terms of Service and
+            Privacy Policy.
+          </p>
         </CardContent>
       </Card>
     </div>
