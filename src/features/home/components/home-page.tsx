@@ -15,15 +15,15 @@ type GraphNode = {
 
 const mainNodes: GraphNode[] = [
   { x: 120, y: 240, label: "AI Agent", big: true },
-  { x: 300, y: 100, label: "Image" },
-  { x: 480, y: 60, label: "Video" },
+  { x: 300, y: 100, label: "Requirements" },
+  { x: 480, y: 60, label: "Research" },
   { x: 300, y: 380, label: "Code" },
   { x: 480, y: 420, label: "Knowledge" },
-  { x: 650, y: 150, label: "Tool" },
-  { x: 650, y: 330, label: "Logic" },
-  { x: 820, y: 100, label: "Data" },
-  { x: 820, y: 380, label: "Human" },
-  { x: 980, y: 240, label: "Output", big: true },
+  { x: 650, y: 150, label: "Tools" },
+  { x: 650, y: 330, label: "Tests" },
+  { x: 820, y: 100, label: "Repository" },
+  { x: 820, y: 380, label: "Review" },
+  { x: 980, y: 240, label: "Software", big: true },
 ];
 
 const mainEdges = [
@@ -43,11 +43,11 @@ const mainEdges = [
 
 const intelNodes: GraphNode[] = [
   { x: 250, y: 200, label: "Agent", big: true },
-  { x: 110, y: 90, label: "Knowledge" },
-  { x: 390, y: 90, label: "Image" },
-  { x: 110, y: 320, label: "API" },
-  { x: 390, y: 320, label: "Tool" },
-  { x: 250, y: 380, label: "Output", big: true },
+  { x: 110, y: 90, label: "Context" },
+  { x: 390, y: 90, label: "Repository" },
+  { x: 110, y: 320, label: "Tools" },
+  { x: 390, y: 320, label: "Tests" },
+  { x: 250, y: 380, label: "Code", big: true },
 ];
 
 const intelEdges = [
@@ -80,12 +80,16 @@ function NodeGraph({
       {edges.map(([a, b], i) => {
         const na = nodes[a];
         const nb = nodes[b];
+
         const dx = Math.max(34, Math.abs(nb.x - na.x) * 0.45);
+
         return (
           <path
             key={i}
             className="canvas-edge"
-            d={`M ${na.x + 56} ${na.y} C ${na.x + 56 + dx} ${na.y}, ${nb.x - 56 - dx} ${nb.y}, ${nb.x - 56} ${nb.y}`}
+            d={`M ${na.x + 56} ${na.y} C ${
+              na.x + 56 + dx
+            } ${na.y}, ${nb.x - 56 - dx} ${nb.y}, ${nb.x - 56} ${nb.y}`}
           />
         );
       })}
@@ -93,6 +97,7 @@ function NodeGraph({
       {nodes.map((node) => {
         const w = node.big ? 126 : 112;
         const h = node.big ? 62 : 58;
+
         const x = node.x - w / 2;
         const y = node.y - h / 2;
 
@@ -104,6 +109,7 @@ function NodeGraph({
           >
             <rect className="node-body" width={w} height={h} rx="8" />
             <rect className="node-header" width={w} height="21" rx="8" />
+
             <rect
               className="node-accent"
               width="3"
@@ -113,16 +119,19 @@ function NodeGraph({
             />
 
             <circle className="node-port input" cx="0" cy={h / 2} r="3.4" />
+
             <circle className="node-port output" cx={w} cy={h / 2} r="3.4" />
 
             <text className="node-icon" x="11" y="15">
               {node.big ? "AI" : "N"}
             </text>
+
             <text className="node-title" x="29" y="15">
               {node.label}
             </text>
+
             <text className="node-subtitle" x="11" y="38">
-              {node.big ? "INTELLIGENCE" : "CAPABILITY"}
+              {node.big ? "ENGINEERING AGENT" : "CAPABILITY"}
             </text>
 
             <circle
@@ -140,7 +149,7 @@ function NodeGraph({
 
 function useReveal() {
   useEffect(() => {
-    const elements = document.querySelectorAll<HTMLElement>(".reveal");
+    const elements = document.querySelectorAll(".reveal");
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -155,7 +164,61 @@ function useReveal() {
     );
 
     elements.forEach((element) => observer.observe(element));
+
     return () => observer.disconnect();
+  }, []);
+}
+
+function useParallax() {
+  useEffect(() => {
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-parallax]"),
+    );
+
+    if (!elements.length) return;
+
+    let frame = 0;
+    let scrollY = window.scrollY;
+
+    const update = () => {
+      frame = 0;
+
+      elements.forEach((element) => {
+        const speed = Number(element.dataset.parallax ?? 0.1);
+        const direction = element.dataset.parallaxDirection === "x";
+
+        const rect = element.getBoundingClientRect();
+        const center = rect.top + rect.height / 2 - window.innerHeight / 2;
+
+        const offset = center * speed;
+
+        if (direction) {
+          element.style.transform = `translate3d(${offset}px, 0, 0)`;
+        } else {
+          element.style.transform = `translate3d(0, ${offset}px, 0)`;
+        }
+      });
+    };
+
+    const onScroll = () => {
+      scrollY = window.scrollY;
+
+      if (!frame) {
+        frame = requestAnimationFrame(update);
+      }
+    };
+
+    update();
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+    };
   }, []);
 }
 
@@ -164,9 +227,11 @@ function HeroCanvas() {
 
   useEffect(() => {
     const canvas = ref.current;
+
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
+
     if (!ctx) return;
 
     let animationFrame = 0;
@@ -176,15 +241,15 @@ function HeroCanvas() {
     let time = 0;
 
     const labels = [
-      ["AI Agent", "reason / decide"],
-      ["Image", "generation"],
-      ["Video", "composition"],
-      ["Knowledge", "context"],
-      ["Code", "execution"],
-      ["Tool", "capability"],
-      ["Logic", "routing"],
-      ["Data", "input"],
-      ["Output", "result"],
+      ["Engineering Agent", "reason / decide"],
+      ["Requirements", "understand intent"],
+      ["Research", "explore context"],
+      ["Architecture", "design systems"],
+      ["Code", "implementation"],
+      ["Tools", "take action"],
+      ["Tests", "verify behavior"],
+      ["Repository", "read / write"],
+      ["Review", "improve output"],
     ];
 
     let nodes: Array<{
@@ -213,6 +278,7 @@ function HeroCanvas() {
       r: number,
     ) => {
       const rr = Math.min(r, w / 2, h / 2);
+
       ctx.beginPath();
       ctx.moveTo(x + rr, y);
       ctx.arcTo(x + w, y, x + w, y + h, rr);
@@ -224,31 +290,41 @@ function HeroCanvas() {
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       width = canvas.parentElement?.offsetWidth ?? window.innerWidth;
+
       height = canvas.parentElement?.offsetHeight ?? window.innerHeight;
 
       canvas.width = width * dpr;
       canvas.height = height * dpr;
+
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       nodes = labels.map(([title, subtitle], i) => {
         const angle = (i / labels.length) * Math.PI * 2;
+
         const rx = width * 0.34;
         const ry = height * 0.31;
 
         return {
           title,
           subtitle,
+
           baseX:
             width / 2 + Math.cos(angle) * rx * (0.62 + Math.random() * 0.28),
+
           baseY:
             height / 2 + Math.sin(angle) * ry * (0.62 + Math.random() * 0.28),
+
           phase: Math.random() * Math.PI * 2,
           speed: 0.25 + Math.random() * 0.25,
-          width: 112,
-          height: 48,
+
+          width: title === "Engineering Agent" ? 138 : 118,
+          height: title === "Engineering Agent" ? 58 : 48,
+
           x: 0,
           y: 0,
         };
@@ -256,13 +332,13 @@ function HeroCanvas() {
 
       nodes.push({
         title: "Vangrex",
-        subtitle: "visual system",
+        subtitle: "agentic engineering",
         baseX: width / 2,
         baseY: height / 2,
         phase: 0,
         speed: 0,
-        width: 128,
-        height: 56,
+        width: 142,
+        height: 62,
         center: true,
         x: width / 2,
         y: height / 2,
@@ -271,10 +347,12 @@ function HeroCanvas() {
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
+
       time += reduced ? 0 : 0.006;
 
       nodes.forEach((node) => {
         node.x = node.baseX + Math.sin(time * node.speed * 4 + node.phase) * 12;
+
         node.y = node.baseY + Math.cos(time * node.speed * 3 + node.phase) * 12;
       });
 
@@ -284,6 +362,7 @@ function HeroCanvas() {
         if (node.center) return;
 
         const mx = (center.x + node.x) / 2 + Math.sin(time + i) * 18;
+
         const my = (center.y + node.y) / 2 + Math.cos(time + i) * 18;
 
         const gradient = ctx.createLinearGradient(
@@ -294,13 +373,17 @@ function HeroCanvas() {
         );
 
         gradient.addColorStop(0, "rgba(106,108,245,.16)");
+
         gradient.addColorStop(1, "rgba(154,108,240,.02)");
 
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 1;
+
         ctx.beginPath();
         ctx.moveTo(center.x, center.y);
+
         ctx.quadraticCurveTo(mx, my, node.x, node.y);
+
         ctx.stroke();
       });
 
@@ -309,57 +392,80 @@ function HeroCanvas() {
         const y = node.y - node.height / 2;
 
         ctx.save();
+
         ctx.shadowColor = node.center
           ? "rgba(154,108,240,.28)"
           : "rgba(0,0,0,.3)";
+
         ctx.shadowBlur = node.center ? 28 : 18;
         ctx.shadowOffsetY = 8;
 
         roundedRect(x, y, node.width, node.height, 8);
+
         ctx.fillStyle = node.center
           ? "rgba(24,21,38,.94)"
           : "rgba(13,13,20,.86)";
+
         ctx.fill();
 
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
 
         roundedRect(x, y, node.width, node.height, 8);
+
         ctx.strokeStyle = node.center
           ? "rgba(154,108,240,.42)"
           : "rgba(255,255,255,.10)";
+
         ctx.stroke();
 
         ctx.fillStyle = node.center ? "#9a6cf0" : "#6a6cf5";
+
         ctx.fillRect(x, y, 3, node.height);
 
         ctx.beginPath();
+
         ctx.arc(x + 15, y + 16, 3.5, 0, Math.PI * 2);
+
         ctx.fillStyle = node.center ? "#9a6cf0" : "#f2f2f5";
+
         ctx.shadowColor = node.center ? "#9a6cf0" : "rgba(106,108,245,.6)";
+
         ctx.shadowBlur = 8;
+
         ctx.fill();
+
         ctx.shadowBlur = 0;
 
         ctx.font = '600 10px "Space Grotesk", sans-serif';
+
         ctx.fillStyle = "#f2f2f5";
+
         ctx.fillText(node.title, x + 26, y + 19);
 
         ctx.font = '8px "JetBrains Mono", monospace';
+
         ctx.fillStyle = "rgba(139,139,156,.8)";
+
         ctx.fillText(node.subtitle, x + 26, y + 34);
 
         if (!node.center) {
           ctx.beginPath();
+
           ctx.arc(x - 1, y + node.height / 2, 3, 0, Math.PI * 2);
+
           ctx.fillStyle = "#0d0d14";
           ctx.strokeStyle = "rgba(106,108,245,.7)";
+
           ctx.stroke();
 
           ctx.beginPath();
+
           ctx.arc(x + node.width + 1, y + node.height / 2, 3, 0, Math.PI * 2);
+
           ctx.fillStyle = "#0d0d14";
           ctx.strokeStyle = "rgba(154,108,240,.7)";
+
           ctx.stroke();
         }
 
@@ -373,6 +479,7 @@ function HeroCanvas() {
     draw();
 
     window.addEventListener("resize", resize);
+
     return () => {
       cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
@@ -387,8 +494,11 @@ function FinalCanvas() {
 
   useEffect(() => {
     const canvas = ref.current;
+
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
+
     if (!ctx) return;
 
     let frame = 0;
@@ -409,16 +519,21 @@ function FinalCanvas() {
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       w = canvas.parentElement?.offsetWidth ?? window.innerWidth;
+
       h = canvas.parentElement?.offsetHeight ?? 500;
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
+
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const count = Math.max(14, Math.floor(w / 90));
+
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -428,30 +543,39 @@ function FinalCanvas() {
 
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
+
       t += reduced ? 0 : 0.003;
 
       nodes.forEach((node, i) => {
         const x = node.x + Math.sin(t + node.phase) * 10;
+
         const y = node.y + Math.cos(t * 0.8 + node.phase) * 10;
 
         nodes.slice(i + 1).forEach((other) => {
           const dx = other.x - node.x;
           const dy = other.y - node.y;
+
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 220) {
             ctx.strokeStyle = `rgba(106,108,245,${0.12 * (1 - dist / 220)})`;
+
             ctx.lineWidth = 1;
+
             ctx.beginPath();
             ctx.moveTo(x, y);
             ctx.lineTo(other.x, other.y);
+
             ctx.stroke();
           }
         });
 
         ctx.beginPath();
+
         ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+
         ctx.fillStyle = "rgba(242,242,245,.5)";
+
         ctx.fill();
       });
 
@@ -462,6 +586,7 @@ function FinalCanvas() {
     draw();
 
     window.addEventListener("resize", resize);
+
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
@@ -475,13 +600,12 @@ export default function HomePage() {
   const session = authClient.useSession();
 
   useReveal();
+  useParallax();
 
   const [activeStory, setActiveStory] = useState(0);
 
   useEffect(() => {
-    const steps = Array.from(
-      document.querySelectorAll<HTMLElement>(".story-step"),
-    );
+    const steps = Array.from(document.querySelectorAll(".story-step"));
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -500,6 +624,7 @@ export default function HomePage() {
     );
 
     steps.forEach((step) => observer.observe(step));
+
     return () => observer.disconnect();
   }, []);
 
@@ -508,7 +633,7 @@ export default function HomePage() {
       <div className="bg-grid" />
       <div className="noise" />
 
-      <nav className="nav" id="nav">
+      <nav className="nav">
         <div className="logo">
           <Logo width={36} height={36} />
           Vangrex
@@ -516,16 +641,19 @@ export default function HomePage() {
 
         <ul className="nav-links">
           <li>
-            <a href="#canvas-section">Product</a>
+            <a href="#canvas-section">Platform</a>
           </li>
+
           <li>
-            <a href="#create-section">Explore</a>
+            <a href="#create-section">Capabilities</a>
           </li>
+
           <li>
-            <a href="#converge-section">Use Cases</a>
+            <a href="#converge-section">Engineering</a>
           </li>
+
           <li>
-            <a href="#results">Resources</a>
+            <a href="#results">Outcomes</a>
           </li>
         </ul>
 
@@ -533,49 +661,54 @@ export default function HomePage() {
           <a href="/auth/sign-in" className="nav-signin">
             Sign In
           </a>
+
           <Button className="btn btn-primary" asChild>
-            <Link href="/auth/sign-in">Start Creating</Link>
+            <Link href="/auth/sign-in">Start Building</Link>
           </Button>
         </div>
       </nav>
 
       <header className="hero">
-        <div className="hero-canvas-wrap">
+        <div className="hero-orb hero-orb-one" data-parallax="0.12" />
+
+        <div className="hero-orb hero-orb-two" data-parallax="-0.08" />
+
+        <div className="hero-canvas-wrap" data-parallax="0.035">
           <HeroCanvas />
         </div>
 
-        <div className="hero-content">
+        <div className="hero-content" data-parallax="-0.045">
           <div className="eyebrow">
             <span className="eyebrow-dot" />
-            Now composing systems, not just workflows
+            Agentic software engineering
           </div>
 
           <h1>
-            One canvas.
+            Software that
             <br />
-            <span className="accent">Infinite possibilities.</span>
+            <span className="accent">builds itself.</span>
           </h1>
 
           <p>
-            Vangrex is a visual platform for creating intelligent systems — from
-            software to art, video to research — with the power of modern AI.
+            Vangrex is a visual platform for building agentic software systems.
+            Give AI agents requirements, context, tools, repositories, and tests
+            — then let them reason, build, verify, and improve software.
           </p>
 
           <div className="hero-ctas">
-            <Button className="" size={`lg`} asChild>
+            <Button size="lg" asChild>
               <Link href="/auth/sign-in" className="btn btn-primary">
-                Start Creating
+                Start Building
               </Link>
             </Button>
-            <Button className="" size={`lg`} variant={`outline`}>
-              <Link href="#canvas-section" className="">
-                Explore Vangrex
-              </Link>
+
+            <Button size="lg" variant="outline" asChild>
+              <Link href="#canvas-section">Explore Vangrex</Link>
             </Button>
           </div>
         </div>
 
-        <div className="scroll-cue">
+        <div className="scroll-cue" data-parallax="0.08">
           <span>SCROLL</span>
           <div className="scroll-line" />
         </div>
@@ -584,13 +717,14 @@ export default function HomePage() {
       <section className="section story">
         <div className="container">
           <span className="kicker reveal">How it begins</span>
+
           <h2 className="reveal story-heading">
-            Every system starts the same way.
+            Every software system starts with an idea.
           </h2>
         </div>
 
         <div className="container story-inner">
-          <div className="story-visual">
+          <div className="story-visual" data-parallax="0.06">
             <svg
               className="story-svg"
               viewBox="0 0 560 520"
@@ -598,38 +732,42 @@ export default function HomePage() {
               aria-hidden="true"
             >
               {activeStory === 0 ? (
-                <StoryNode x={280} y={260} label="Canvas" big />
+                <StoryNode x={280} y={260} label="Idea" big />
               ) : (
                 <>
-                  {["Agent", "Image", "Data", "Tool", "Knowledge"]
+                  {["Requirements", "Research", "Code", "Tools", "Tests"]
                     .slice(0, activeStory === 1 ? 1 : activeStory === 2 ? 3 : 5)
                     .map((label, i, arr) => {
                       const angle =
                         (i / arr.length) * Math.PI * 2 - Math.PI / 2;
+
                       const x = 280 + Math.cos(angle) * 150;
+
                       const y = 260 + Math.sin(angle) * 150;
 
                       return (
                         <g key={label}>
                           <path
                             className="canvas-edge"
-                            d={`M 332 260 C ${
-                              (280 + x) / 2 + 20
-                            } 260, ${(280 + x) / 2 - 20} ${y}, ${x - 52} ${y}`}
+                            d={`M 332 260 C ${(280 + x) / 2 + 20} 260, ${
+                              (280 + x) / 2 - 20
+                            } ${y}, ${x - 52} ${y}`}
                           />
+
                           <StoryNode
                             x={x}
                             y={y}
                             label={label}
-                            big={label === "Agent"}
+                            big={label === "Code"}
                           />
                         </g>
                       );
                     })}
+
                   <StoryNode
                     x={280}
                     y={260}
-                    label={activeStory === 4 ? "Result" : "Canvas"}
+                    label={activeStory === 4 ? "Software" : "Agent"}
                     big
                   />
                 </>
@@ -640,29 +778,29 @@ export default function HomePage() {
           <div className="story-steps">
             {[
               [
-                "01 / BLANK CANVAS",
-                "Ideas start with a blank canvas.",
-                "No templates. No rigid workflows. Just an empty space and something you want to build.",
+                "01 / INTENT",
+                "Start with a software idea.",
+                "Describe what you want to build. The system starts from intent instead of forcing you into a predefined workflow.",
               ],
               [
-                "02 / INTELLIGENCE",
-                "Add intelligence.",
-                "Drop in an agent. Give your system the ability to reason, decide, and act on its own.",
+                "02 / REASONING",
+                "Let an agent understand it.",
+                "An engineering agent decomposes requirements, asks what matters, researches the problem, and creates an executable plan.",
               ],
               [
-                "03 / CAPABILITIES",
-                "Give it capabilities.",
-                "Images, video, tools, data, knowledge, APIs — bring in exactly what the system needs to do.",
+                "03 / EXECUTION",
+                "Give the agent real capabilities.",
+                "Repositories, terminals, APIs, documentation, databases, code generators, testing tools, and other capabilities become part of the system.",
               ],
               [
-                "04 / CONNECTION",
-                "Connect everything.",
-                "Wire it together. What was scattered pieces becomes one working, intelligent system.",
+                "04 / VERIFICATION",
+                "Build, test, inspect, improve.",
+                "Agents don't just generate code. They can run it, inspect results, execute tests, identify failures, and iterate toward a working system.",
               ],
               [
-                "05 / RESULT",
-                "Create something real.",
-                "Software. Art. A film. A report. Whatever you imagined — the canvas builds it.",
+                "05 / SOFTWARE",
+                "Turn intent into working software.",
+                "From a blank canvas to a functioning application — Vangrex orchestrates the intelligence and capabilities required to get there.",
               ],
             ].map(([num, title, text], index) => (
               <div
@@ -673,7 +811,9 @@ export default function HomePage() {
                 key={num}
               >
                 <div className="num">{num}</div>
+
                 <h3>{title}</h3>
+
                 <p>{text}</p>
               </div>
             ))}
@@ -683,62 +823,72 @@ export default function HomePage() {
 
       <section className="section" id="create-section">
         <div className="container">
-          <span className="kicker reveal">Possibilities</span>
-          <h2 className="reveal">What will you create?</h2>
+          <span className="kicker reveal">Agentic engineering</span>
+
+          <h2 className="reveal">What can an engineering agent actually do?</h2>
+
           <p className="lede reveal">
-            If you can imagine the system, you can build it. Here are a few
-            places to start.
+            Vangrex connects reasoning with the capabilities required to move
+            software from an idea to a working system.
           </p>
 
           <div className="create-grid reveal">
             {[
               [
-                "Software",
-                "Engineering systems",
-                "Build systems that research, architect, write, test, and review code.",
-                ["Requirement", "Research", "Code", "Review"],
-              ],
-              [
-                "Images",
-                "Generation & editing",
-                "Compose systems that generate, restyle, and refine images at any scale.",
-                ["Prompt", "Generate", "Style", "Final"],
-              ],
-              [
-                "Video",
-                "Reels & pipelines",
-                "Script, generate, voice, score, and edit — a full production line.",
-                ["Idea", "Script", "Voice", "Edit"],
-              ],
-              [
-                "Art",
-                "Artistic systems",
-                "Build generative pipelines that explore style, variation, and composition.",
-                ["Concept", "Style", "Variation"],
+                "Requirements",
+                "Understand the problem",
+                "Transform product intent into structured requirements, constraints, acceptance criteria, and engineering tasks.",
+                ["Intent", "Analyze", "Specify", "Plan"],
               ],
               [
                 "Research",
-                "Reasoning systems",
-                "Systems that gather sources, analyze, and reason toward an answer.",
-                ["Question", "Sources", "Analysis"],
+                "Explore before building",
+                "Agents can investigate documentation, existing implementations, APIs, libraries, and technical constraints before writing code.",
+                ["Question", "Research", "Context", "Decision"],
               ],
               [
-                "And beyond",
-                "Whatever you imagine",
-                "These aren't categories with edges. They're starting points — the canvas doesn't stop here.",
-                ["Your idea", "?"],
+                "Architecture",
+                "Design the system",
+                "Turn requirements into architecture, components, data flows, interfaces, services, and implementation plans.",
+                ["Requirements", "Design", "Decompose"],
+              ],
+              [
+                "Coding",
+                "Write real software",
+                "Agents can work across repositories and produce implementation changes instead of stopping at generated snippets.",
+                ["Context", "Code", "Integrate", "Commit"],
+              ],
+              [
+                "Testing",
+                "Verify what was built",
+                "Run tests, inspect failures, reason about regressions, and iterate until the implementation satisfies the intended behavior.",
+                ["Build", "Test", "Analyze", "Fix"],
+              ],
+              [
+                "Review",
+                "Continuously improve",
+                "Use agents to inspect implementations, identify weaknesses, suggest changes, and improve the quality of the resulting software.",
+                ["Inspect", "Review", "Improve"],
               ],
             ].map(([tag, title, text, flow]) => (
-              <div className="create-card" key={tag as string}>
+              <div
+                className="create-card"
+                key={tag as string}
+                data-parallax={"0.025"}
+              >
                 <div>
                   <span className="tag">{tag}</span>
+
                   <h4>{title}</h4>
+
                   <p>{text}</p>
                 </div>
+
                 <div className="flow">
                   {(flow as string[]).map((item, index) => (
                     <span key={`${item}-${index}`} className="flow-item">
                       <span className="flow-node">{item}</span>
+
                       {index < (flow as string[]).length - 1 && (
                         <span className="arrow">→</span>
                       )}
@@ -753,32 +903,34 @@ export default function HomePage() {
 
       <section className="section canvas-section" id="canvas-section">
         <div className="container">
-          <span className="kicker reveal">The canvas</span>
-          <h2 className="reveal canvas-heading">
-            Your ideas. Your system. Your canvas.
+          <span className="kicker reveal">The engineering canvas</span>
+
+          <h2 className="reveal canvas-heading" data-parallax="-0.035">
+            Your agent. Your tools. Your codebase.
           </h2>
+
           <p className="lede reveal">
-            No rigid templates. Different kinds of capability — intelligence,
-            media, logic, data, people — coexist inside one visual system,
-            however you choose to combine them.
+            Vangrex gives engineering agents a visual environment where
+            reasoning, context, tools, code, tests, and humans can coexist as
+            one system.
           </p>
 
-          <div className="canvas-visual reveal">
+          <div className="canvas-visual reveal" data-parallax="0.045">
             <NodeGraph nodes={mainNodes} edges={mainEdges} />
           </div>
 
-          <div className="canvas-label-row reveal">
+          <div className="canvas-label-row reveal" data-parallax="-0.02">
             {[
               "AI Agent",
-              "Image",
-              "Video",
+              "Requirements",
+              "Research",
               "Code",
               "Knowledge",
-              "Tool",
-              "Logic",
-              "Data",
-              "Human",
-              "Output",
+              "Tools",
+              "Tests",
+              "Repository",
+              "Review",
+              "Software",
             ].map((label) => (
               <span className="canvas-label" key={label}>
                 {label}
@@ -791,17 +943,20 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div className="intel-grid">
-            <div className="reveal">
+            <div className="reveal" data-parallax="0.035">
               <span className="kicker">Intelligence</span>
-              <h2>Intelligence, wherever you need it.</h2>
+
+              <h2>Agents that operate inside the engineering system.</h2>
+
               <p className="lede">
-                Agents aren't chatbots on Vangrex. They reason, choose tools,
-                pull knowledge, and generate — deciding what a system needs at
-                each step.
+                Software agents shouldn't exist in isolation. They need
+                repository context, knowledge, tools, execution environments,
+                tests, and feedback loops. Vangrex brings those capabilities
+                together.
               </p>
             </div>
 
-            <div className="intel-visual reveal">
+            <div className="intel-visual reveal" data-parallax="-0.045">
               <NodeGraph nodes={intelNodes} edges={intelEdges} />
             </div>
           </div>
@@ -810,31 +965,42 @@ export default function HomePage() {
 
       <section className="section section-tight" id="converge-section">
         <div className="container">
-          <span className="kicker reveal">One language</span>
-          <h2 className="reveal converge-heading">
-            Creators, developers, researchers, builders — one canvas.
+          <span className="kicker reveal">One engineering system</span>
+
+          <h2 className="reveal converge-heading" data-parallax="0.03">
+            From requirement to production — one canvas.
           </h2>
+
           <p className="lede reveal">
-            Different people, different outcomes, the same underlying system.
+            Different engineering tasks, different agents, the same underlying
+            system.
           </p>
 
           <div className="converge-rows reveal">
             {[
-              ["Artist", ["Idea", "AI", "Image"], "Artwork"],
-              ["Developer", ["Requirement", "AI", "Code"], "Software"],
-              ["Creator", ["Concept", "AI", "Video"], "A reel"],
-              ["Researcher", ["Question", "AI", "Knowledge"], "A report"],
+              ["Product", ["Idea", "Agent", "Requirements"], "Specification"],
+              [
+                "Architect",
+                ["Requirements", "Agent", "Architecture"],
+                "System design",
+              ],
+              ["Developer", ["Context", "Agent", "Code"], "Software"],
+              ["QA", ["Build", "Agent", "Tests"], "Verified system"],
+              ["Reviewer", ["Repository", "Agent", "Review"], "Improvement"],
             ].map(([role, path, output]) => (
               <div className="converge-row" key={role as string}>
                 <div className="converge-role">{role}</div>
+
                 <div className="converge-path">
                   {(path as string[]).map((item, i) => (
                     <span key={item}>
                       {i > 0 && <span className="path-arrow">→</span>}
+
                       <span className="pill">{item}</span>
                     </span>
                   ))}
                 </div>
+
                 <div className="converge-out">→ {output}</div>
               </div>
             ))}
@@ -843,31 +1009,40 @@ export default function HomePage() {
       </section>
 
       <section className="philosophy">
-        <h2 className="reveal">
-          The future of creation isn't one tool.
+        <div className="philosophy-orb" data-parallax="0.12" />
+
+        <h2 className="reveal" data-parallax="-0.04">
+          The future of software engineering isn't just
           <br />
-          <span className="dim">It's the ability to combine them.</span>
+          <span className="dim">writing code faster.</span>
         </h2>
       </section>
 
       <section className="section section-tight" id="results">
         <div className="container">
           <span className="kicker reveal">Outcomes</span>
-          <h2 className="reveal">Real things come out the other end.</h2>
-          <p className="lede reveal">Different outputs, the same canvas.</p>
 
-          <div className="results-grid reveal">
+          <h2 className="reveal">Build software, not just code.</h2>
+
+          <p className="lede reveal">
+            Agentic engineering connects everything around the code so agents
+            can participate in the complete software development lifecycle.
+          </p>
+
+          <div className="results-grid reveal" data-parallax="0.025">
             {[
-              "Images",
-              "Videos",
-              "Websites",
-              "Software",
-              "Reports",
-              "Research",
-              "Content",
-              "Data pipelines",
-              "Creative assets",
-              "Automated processes",
+              "Requirements",
+              "Technical specifications",
+              "Architecture",
+              "Code",
+              "Refactoring",
+              "Tests",
+              "Bug fixes",
+              "Code review",
+              "Documentation",
+              "Repositories",
+              "APIs",
+              "Production systems",
             ].map((item) => (
               <span className="result-chip" key={item}>
                 {item}
@@ -879,21 +1054,26 @@ export default function HomePage() {
 
       <section className="final">
         <FinalCanvas />
-        <div className="final-content">
-          <h2 className="reveal">What will you create?</h2>
+
+        <div className="final-glow" data-parallax="0.1" />
+
+        <div className="final-content" data-parallax="-0.035">
+          <h2 className="reveal">What will you build?</h2>
+
           <p className="reveal">
-            Build ideas into intelligent systems with Vangrex.
+            Give your software agents a canvas to reason, build, test, and
+            improve.
           </p>
+
           <div className="hero-ctas reveal">
-            <Button size={`lg`}>
+            <Button size="lg" asChild>
               <Link href="/auth/sign-in" className="btn btn-primary btn-lg">
-                Start Creating
+                Start Building
               </Link>
             </Button>
-            <Button size={`lg`} asChild variant={`outline`}>
-              <Link href="#canvas-section" className="">
-                Explore the Canvas
-              </Link>
+
+            <Button size="lg" variant="outline" asChild>
+              <Link href="#canvas-section">Explore the Canvas</Link>
             </Button>
           </div>
         </div>
@@ -904,7 +1084,10 @@ export default function HomePage() {
           <Logo width={64} height={64} />
           Vangrex
         </div>
-        <div className="muted">© 2026 VANGREX — BUILT ON THE CANVAS</div>
+
+        <div className="muted">
+          © 2026 VANGREX — AGENTIC SOFTWARE ENGINEERING
+        </div>
       </footer>
 
       <style jsx global>{`
@@ -930,9 +1113,11 @@ export default function HomePage() {
         * {
           box-sizing: border-box;
         }
+
         html {
           scroll-behavior: smooth;
         }
+
         body {
           margin: 0;
           background: var(--void);
@@ -941,9 +1126,11 @@ export default function HomePage() {
           overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
         }
+
         a {
           color: inherit;
         }
+
         ::selection {
           background: var(--indigo);
           color: white;
@@ -952,7 +1139,9 @@ export default function HomePage() {
         .vangrex-page {
           min-height: 100vh;
           background: var(--void);
+          overflow: hidden;
         }
+
         .bg-grid {
           position: fixed;
           inset: 0;
@@ -972,6 +1161,7 @@ export default function HomePage() {
             transparent 90%
           );
         }
+
         .noise {
           position: fixed;
           inset: 0;
@@ -1004,6 +1194,7 @@ export default function HomePage() {
           background: rgba(7, 7, 11, 0.72);
           backdrop-filter: blur(14px);
         }
+
         .logo {
           display: flex;
           align-items: center;
@@ -1012,13 +1203,7 @@ export default function HomePage() {
           font-weight: 600;
           font-size: 19px;
         }
-        .logo-mark {
-          width: 9px;
-          height: 9px;
-          border-radius: 2px;
-          background: var(--indigo);
-          box-shadow: 0 0 40px rgba(106, 108, 245, 0.25);
-        }
+
         .nav-links {
           display: flex;
           gap: 36px;
@@ -1026,6 +1211,7 @@ export default function HomePage() {
           margin: 0;
           padding: 0;
         }
+
         .nav-links a,
         .nav-signin {
           color: var(--muted);
@@ -1033,10 +1219,12 @@ export default function HomePage() {
           font-size: 14px;
           transition: color 0.25s ease;
         }
+
         .nav-links a:hover,
         .nav-signin:hover {
           color: var(--text);
         }
+
         .nav-right {
           display: flex;
           align-items: center;
@@ -1046,18 +1234,10 @@ export default function HomePage() {
         .btn-primary {
           color: white;
         }
+
         .btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 30px rgba(106, 108, 245, 0.35);
-        }
-        .btn-ghost {
-          border: 1px solid var(--line-strong);
-          color: var(--text);
-          background: transparent;
-        }
-        .btn-ghost:hover {
-          border-color: var(--indigo);
-          background: rgba(106, 108, 245, 0.06);
         }
 
         .hero {
@@ -1069,24 +1249,57 @@ export default function HomePage() {
           text-align: center;
           padding: 140px 24px 80px;
           overflow: hidden;
+          perspective: 1000px;
         }
+
         .hero-canvas-wrap {
           position: absolute;
-          inset: 0;
+          inset: -8%;
           z-index: 0;
           opacity: 0.12;
           pointer-events: none;
+          will-change: transform;
         }
+
         .hero-canvas {
           width: 100%;
           height: 100%;
           display: block;
         }
+
         .hero-content {
           position: relative;
           z-index: 2;
           max-width: 900px;
+          will-change: transform;
         }
+
+        .hero-orb,
+        .philosophy-orb,
+        .final-glow {
+          position: absolute;
+          pointer-events: none;
+          border-radius: 999px;
+          filter: blur(80px);
+          will-change: transform;
+        }
+
+        .hero-orb-one {
+          width: 420px;
+          height: 420px;
+          left: -160px;
+          top: 18%;
+          background: rgba(106, 108, 245, 0.08);
+        }
+
+        .hero-orb-two {
+          width: 360px;
+          height: 360px;
+          right: -140px;
+          top: 35%;
+          background: rgba(154, 108, 240, 0.07);
+        }
+
         .eyebrow {
           display: inline-flex;
           align-items: center;
@@ -1102,6 +1315,7 @@ export default function HomePage() {
           letter-spacing: 0.15em;
           text-transform: uppercase;
         }
+
         .eyebrow-dot {
           width: 6px;
           height: 6px;
@@ -1109,6 +1323,7 @@ export default function HomePage() {
           background: var(--cyan);
           box-shadow: 0 0 8px var(--cyan);
         }
+
         .hero h1 {
           margin: 0 0 26px;
           font-family: var(--display);
@@ -1117,6 +1332,7 @@ export default function HomePage() {
           font-size: clamp(42px, 6.4vw, 92px);
           line-height: 1.04;
         }
+
         .accent {
           background: linear-gradient(
             120deg,
@@ -1128,19 +1344,22 @@ export default function HomePage() {
           background-clip: text;
           color: transparent;
         }
+
         .hero p {
-          max-width: 560px;
+          max-width: 600px;
           margin: 0 auto 40px;
           color: var(--muted);
           font-size: clamp(16px, 1.9vw, 19px);
           line-height: 1.6;
         }
+
         .hero-ctas {
           display: flex;
           gap: 16px;
           justify-content: center;
           flex-wrap: wrap;
         }
+
         .scroll-cue {
           position: absolute;
           bottom: 36px;
@@ -1154,18 +1373,22 @@ export default function HomePage() {
           font-family: var(--mono);
           font-size: 11px;
           letter-spacing: 0.1em;
+          will-change: transform;
         }
+
         .scroll-line {
           width: 1px;
           height: 34px;
           background: linear-gradient(var(--muted-2), transparent);
           animation: scrollpulse 2s ease-in-out infinite;
         }
+
         @keyframes scrollpulse {
           0%,
           100% {
             opacity: 0.3;
           }
+
           50% {
             opacity: 1;
           }
@@ -1176,12 +1399,15 @@ export default function HomePage() {
           margin: 0 auto;
           padding: 0 24px;
         }
+
         .section {
           padding: 150px 0;
         }
+
         .section-tight {
           padding: 100px 0;
         }
+
         .kicker {
           display: block;
           margin-bottom: 18px;
@@ -1191,6 +1417,7 @@ export default function HomePage() {
           letter-spacing: 0.14em;
           text-transform: uppercase;
         }
+
         .section h2 {
           margin: 0 0 20px;
           font-family: var(--display);
@@ -1199,12 +1426,14 @@ export default function HomePage() {
           font-size: clamp(30px, 4.2vw, 54px);
           line-height: 1.1;
         }
+
         .lede {
           max-width: 600px;
           color: var(--muted);
           font-size: 17px;
           line-height: 1.7;
         }
+
         .reveal {
           opacity: 0;
           transform: translateY(28px);
@@ -1212,6 +1441,7 @@ export default function HomePage() {
             opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
             transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
         }
+
         .reveal.in {
           opacity: 1;
           transform: translateY(0);
@@ -1223,6 +1453,7 @@ export default function HomePage() {
           gap: 60px;
           align-items: start;
         }
+
         .story-visual {
           position: sticky;
           top: 120px;
@@ -1237,39 +1468,48 @@ export default function HomePage() {
             ),
             var(--surface);
           overflow: hidden;
+          will-change: transform;
         }
+
         .story-svg {
           width: 100%;
           height: 100%;
         }
+
         .story-heading {
           max-width: 640px;
         }
+
         .story-steps {
           display: flex;
           flex-direction: column;
           gap: 220px;
           padding: 40px 0 120px;
         }
+
         .story-step {
           opacity: 0.25;
           transition: opacity 0.5s ease;
         }
+
         .story-step.active {
           opacity: 1;
         }
+
         .story-step .num {
           margin-bottom: 14px;
           color: var(--muted-2);
           font-family: var(--mono);
           font-size: 12px;
         }
+
         .story-step h3 {
           margin: 0 0 14px;
           font-family: var(--display);
           font-size: clamp(24px, 3vw, 36px);
           font-weight: 600;
         }
+
         .story-step p {
           max-width: 400px;
           color: var(--muted);
@@ -1280,48 +1520,58 @@ export default function HomePage() {
         .canvas-node {
           filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.28));
         }
+
         .node-body {
           fill: rgba(13, 13, 20, 0.96);
           stroke: rgba(255, 255, 255, 0.11);
           stroke-width: 1;
         }
+
         .node-header {
           fill: rgba(255, 255, 255, 0.035);
           stroke: rgba(255, 255, 255, 0.06);
           stroke-width: 1;
         }
+
         .node-title {
           fill: var(--text);
           font-family: var(--display);
           font-size: 11px;
           font-weight: 600;
         }
+
         .node-subtitle {
           fill: var(--muted-2);
           font-family: var(--mono);
           font-size: 8.5px;
         }
+
         .node-icon {
           fill: #f2f2f5;
           font-family: var(--mono);
           font-size: 9px;
           font-weight: 600;
         }
+
         .node-port {
           fill: #0d0d14;
           stroke-width: 1.2;
         }
+
         .node-port.input {
           stroke: #6a6cf5;
         }
+
         .node-port.output {
           stroke: #9a6cf0;
         }
+
         .canvas-edge {
           fill: none;
           stroke: rgba(154, 108, 240, 0.34);
           stroke-width: 1.2;
         }
+
         .node-graph {
           width: 100%;
           height: 100%;
@@ -1338,6 +1588,7 @@ export default function HomePage() {
           border-radius: 16px;
           background: var(--line);
         }
+
         .create-card {
           min-height: 270px;
           padding: 34px 28px 30px;
@@ -1345,11 +1596,17 @@ export default function HomePage() {
           flex-direction: column;
           justify-content: space-between;
           background: var(--surface);
-          transition: background 0.3s ease;
+          transition:
+            background 0.3s ease,
+            transform 0.5s ease;
+          will-change: transform;
         }
+
         .create-card:hover {
           background: var(--surface-2);
+          transform: translateY(-5px);
         }
+
         .tag {
           color: var(--muted-2);
           font-family: var(--mono);
@@ -1357,18 +1614,21 @@ export default function HomePage() {
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
+
         .create-card h4 {
           margin: 10px 0;
           font-family: var(--display);
           font-size: 22px;
           font-weight: 600;
         }
+
         .create-card p {
           margin: 0 0 18px;
           color: var(--muted);
           font-size: 14px;
           line-height: 1.6;
         }
+
         .flow {
           display: flex;
           align-items: center;
@@ -1378,11 +1638,13 @@ export default function HomePage() {
           font-family: var(--mono);
           font-size: 11px;
         }
+
         .flow-item {
           display: inline-flex;
           align-items: center;
           gap: 6px;
         }
+
         .flow-node {
           padding: 4px 9px;
           border: 1px solid var(--line-strong);
@@ -1390,6 +1652,7 @@ export default function HomePage() {
           color: var(--text);
           background: rgba(255, 255, 255, 0.02);
         }
+
         .arrow {
           color: var(--muted-2);
         }
@@ -1403,10 +1666,13 @@ export default function HomePage() {
             transparent 70%
           );
         }
+
         .canvas-heading,
         .converge-heading {
           max-width: 680px;
+          will-change: transform;
         }
+
         .canvas-visual {
           height: 480px;
           margin-top: 60px;
@@ -1421,7 +1687,9 @@ export default function HomePage() {
               transparent 45%
             ),
             var(--surface);
+          will-change: transform;
         }
+
         .canvas-visual::before {
           content: "";
           position: absolute;
@@ -1441,12 +1709,15 @@ export default function HomePage() {
           );
           pointer-events: none;
         }
+
         .canvas-label-row {
           display: flex;
           flex-wrap: wrap;
           gap: 10px;
           margin-top: 34px;
+          will-change: transform;
         }
+
         .canvas-label {
           padding: 7px 14px;
           border: 1px solid var(--line-strong);
@@ -1462,6 +1733,11 @@ export default function HomePage() {
           gap: 60px;
           align-items: center;
         }
+
+        .intel-grid > div {
+          will-change: transform;
+        }
+
         .intel-visual {
           height: 420px;
           position: relative;
@@ -1477,6 +1753,7 @@ export default function HomePage() {
           flex-direction: column;
           border-top: 1px solid var(--line);
         }
+
         .converge-row {
           display: grid;
           grid-template-columns: 180px 1fr 140px;
@@ -1487,16 +1764,19 @@ export default function HomePage() {
           font-family: var(--mono);
           font-size: 13px;
         }
+
         .converge-role {
           color: var(--text);
           font-weight: 500;
         }
+
         .converge-path {
           display: flex;
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
         }
+
         .pill {
           display: inline-block;
           padding: 4px 10px;
@@ -1504,10 +1784,12 @@ export default function HomePage() {
           border-radius: 6px;
           color: var(--text);
         }
+
         .path-arrow {
           margin: 0 8px;
           color: var(--muted-2);
         }
+
         .converge-out {
           color: var(--cyan);
           text-align: right;
@@ -1520,15 +1802,30 @@ export default function HomePage() {
           justify-content: center;
           padding: 180px 24px;
           text-align: center;
+          overflow: hidden;
         }
+
         .philosophy h2 {
-          max-width: 800px;
+          position: relative;
+          z-index: 2;
+          max-width: 900px;
           margin: 0;
           font-family: var(--display);
           font-size: clamp(30px, 5vw, 58px);
           font-weight: 500;
           line-height: 1.35;
+          will-change: transform;
         }
+
+        .philosophy-orb {
+          width: 520px;
+          height: 520px;
+          background: rgba(106, 108, 245, 0.08);
+          top: 30%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
         .dim {
           color: var(--muted-2);
         }
@@ -1538,7 +1835,9 @@ export default function HomePage() {
           flex-wrap: wrap;
           gap: 12px;
           margin-top: 50px;
+          will-change: transform;
         }
+
         .result-chip {
           padding: 12px 20px;
           border: 1px solid var(--line-strong);
@@ -1549,6 +1848,7 @@ export default function HomePage() {
           font-size: 13px;
           transition: all 0.35s ease;
         }
+
         .result-chip:hover {
           border-color: var(--indigo);
           color: var(--text);
@@ -1563,6 +1863,7 @@ export default function HomePage() {
           border-top: 1px solid var(--line);
           text-align: center;
         }
+
         .final-canvas {
           position: absolute;
           inset: 0;
@@ -1570,16 +1871,29 @@ export default function HomePage() {
           height: 100%;
           opacity: 0.5;
         }
+
+        .final-glow {
+          width: 700px;
+          height: 700px;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(106, 108, 245, 0.06);
+        }
+
         .final-content {
           position: relative;
           z-index: 2;
+          will-change: transform;
         }
+
         .final h2 {
           margin: 0 0 22px;
           font-family: var(--display);
           font-size: clamp(34px, 5.5vw, 68px);
           font-weight: 600;
         }
+
         .final p {
           margin: 0 0 44px;
           color: var(--muted);
@@ -1595,6 +1909,7 @@ export default function HomePage() {
           padding: 50px 5vw;
           border-top: 1px solid var(--line);
         }
+
         footer .muted {
           color: var(--muted-2);
           font-size: 13px;
@@ -1606,21 +1921,29 @@ export default function HomePage() {
           .nav-signin {
             display: none;
           }
+
           .story-inner,
           .intel-grid {
             grid-template-columns: 1fr;
           }
+
           .story-visual {
             position: relative;
             top: 0;
             height: 340px;
           }
+
           .story-steps {
             gap: 60px;
             padding: 40px 0;
           }
+
           .story-step {
             opacity: 1;
+          }
+
+          [data-parallax] {
+            transform: none !important;
           }
         }
 
@@ -1634,23 +1957,35 @@ export default function HomePage() {
           .section {
             padding: 100px 0;
           }
+
           .story-visual {
             height: 280px;
           }
+
           .converge-row {
             grid-template-columns: 1fr;
             gap: 8px;
             padding: 20px 0;
           }
+
           .converge-out {
             text-align: left;
           }
+
           .nav {
             padding: 18px 24px;
           }
+
           .nav-right .btn {
             padding: 9px 13px;
             font-size: 12px;
+          }
+
+          .hero-orb-one,
+          .hero-orb-two,
+          .philosophy-orb,
+          .final-glow {
+            opacity: 0.5;
           }
         }
 
@@ -1660,6 +1995,10 @@ export default function HomePage() {
           *::after {
             animation: none !important;
             transition: none !important;
+          }
+
+          [data-parallax] {
+            transform: none !important;
           }
         }
       `}</style>
@@ -1687,24 +2026,28 @@ function StoryNode({
       transform={`translate(${x - w / 2},${y - h / 2})`}
     >
       <rect className="node-body" width={w} height={h} rx="8" />
-      <rect className="node-header" width={w} height="20" rx="8" />
-      <rect
-        className="node-accen bg-primary fill-primary"
-        width="3"
-        height={h}
-        rx="2"
-      />
+
+      <rect className="node-header" width={w} height="21" rx="8" />
+
+      <rect width="3" height={h} rx="2" fill={big ? "#9a6cf0" : "#6a6cf5"} />
+
       <circle className="node-port input" cx="0" cy={h / 2} r="3" />
+
       <circle className="node-port output" cx={w} cy={h / 2} r="3" />
-      <text className="node-icon" x="12" y="14">
+
+      <text className="node-icon" x="11" y="15">
         {big ? "AI" : "N"}
       </text>
-      <text className="node-title" x="30" y="14">
+
+      <text className="node-title" x="29" y="15">
         {label}
       </text>
-      <text className="node-subtitle" x="12" y="38">
-        {big ? "INTELLIGENCE" : "CAPABILITY"}
+
+      <text className="node-subtitle" x="11" y="38">
+        {big ? "ENGINEERING AGENT" : "CAPABILITY"}
       </text>
+
+      <circle cx={w - 12} cy="12" r="2.2" fill={big ? "#9a6cf0" : "#5cc9e8"} />
     </g>
   );
 }
