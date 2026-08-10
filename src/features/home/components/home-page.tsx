@@ -4,7 +4,8 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type GraphNode = {
   x: number;
@@ -61,6 +62,90 @@ const intelEdges = [
   [4, 5],
 ];
 
+/* -------------------------------------------------------------------------- */
+/*                                PARALLAX                                     */
+/* -------------------------------------------------------------------------- */
+
+function Parallax({
+  children,
+  y = 80,
+  x = 0,
+  scale = 0,
+  opacity = 0,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode;
+  y?: number;
+  x?: number;
+  scale?: number;
+  opacity?: number;
+  className?: string;
+  delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  const rawY = useTransform(scrollYProgress, [0, 0.5, 1], [y, 0, -y]);
+  const rawX = useTransform(scrollYProgress, [0, 0.5, 1], [x, 0, -x]);
+
+  const rawScale = useTransform(
+    scrollYProgress,
+    [0, 0.5, 1],
+    [1 - scale, 1, 1 + scale],
+  );
+
+  const rawOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.2, 0.5, 0.8, 1],
+    [opacity ? 0.7 : 1, 1, 1, 1, opacity ? 0.7 : 1],
+  );
+
+  const springY = useSpring(rawY, {
+    stiffness: 80,
+    damping: 24,
+    mass: 0.5,
+  });
+
+  const springX = useSpring(rawX, {
+    stiffness: 80,
+    damping: 24,
+    mass: 0.5,
+  });
+
+  const springScale = useSpring(rawScale, {
+    stiffness: 90,
+    damping: 26,
+  });
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      style={{
+        x: springX,
+        y: springY,
+        scale: springScale,
+        opacity: rawOpacity,
+        willChange: "transform",
+      }}
+      transition={{
+        delay,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              NODE GRAPH                                     */
+/* -------------------------------------------------------------------------- */
+
 function NodeGraph({
   nodes,
   edges,
@@ -108,6 +193,7 @@ function NodeGraph({
             transform={`translate(${x},${y})`}
           >
             <rect className="node-body" width={w} height={h} rx="8" />
+
             <rect className="node-header" width={w} height="21" rx="8" />
 
             <rect
@@ -147,9 +233,15 @@ function NodeGraph({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                REVEAL                                       */
+/* -------------------------------------------------------------------------- */
+
 function useReveal() {
   useEffect(() => {
     const elements = document.querySelectorAll(".reveal");
+
+    if (!elements.length) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -160,7 +252,10 @@ function useReveal() {
           }
         });
       },
-      { threshold: 0.15 },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -8% 0px",
+      },
     );
 
     elements.forEach((element) => observer.observe(element));
@@ -169,58 +264,9 @@ function useReveal() {
   }, []);
 }
 
-function useParallax() {
-  useEffect(() => {
-    const elements = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-parallax]"),
-    );
-
-    if (!elements.length) return;
-
-    let frame = 0;
-    let scrollY = window.scrollY;
-
-    const update = () => {
-      frame = 0;
-
-      elements.forEach((element) => {
-        const speed = Number(element.dataset.parallax ?? 0.1);
-        const direction = element.dataset.parallaxDirection === "x";
-
-        const rect = element.getBoundingClientRect();
-        const center = rect.top + rect.height / 2 - window.innerHeight / 2;
-
-        const offset = center * speed;
-
-        if (direction) {
-          element.style.transform = `translate3d(${offset}px, 0, 0)`;
-        } else {
-          element.style.transform = `translate3d(0, ${offset}px, 0)`;
-        }
-      });
-    };
-
-    const onScroll = () => {
-      scrollY = window.scrollY;
-
-      if (!frame) {
-        frame = requestAnimationFrame(update);
-      }
-    };
-
-    update();
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-    };
-  }, []);
-}
+/* -------------------------------------------------------------------------- */
+/*                              HERO CANVAS                                    */
+/* -------------------------------------------------------------------------- */
 
 function HeroCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -230,7 +276,10 @@ function HeroCanvas() {
 
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", {
+      alpha: true,
+      desynchronized: true,
+    });
 
     if (!ctx) return;
 
@@ -239,6 +288,28 @@ function HeroCanvas() {
     let height = 0;
     let dpr = 1;
     let time = 0;
+    let visible = true;
+
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const lowPower =
+      (
+        navigator as Navigator & {
+          deviceMemory?: number;
+          hardwareConcurrency?: number;
+        }
+      ).deviceMemory !== undefined &&
+      ((
+        navigator as Navigator & {
+          deviceMemory?: number;
+        }
+      ).deviceMemory ?? 8) <= 4;
+
+    const veryLowPower = (navigator.hardwareConcurrency ?? 8) <= 2;
+
+    const staticMode = reduced || lowPower || veryLowPower;
 
     const labels = [
       ["Engineering Agent", "reason / decide"],
@@ -266,10 +337,6 @@ function HeroCanvas() {
       y: number;
     }> = [];
 
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
     const roundedRect = (
       x: number,
       y: number,
@@ -289,14 +356,15 @@ function HeroCanvas() {
     };
 
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, staticMode ? 1 : 1.5);
 
       width = canvas.parentElement?.offsetWidth ?? window.innerWidth;
 
       height = canvas.parentElement?.offsetHeight ?? window.innerHeight;
 
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      canvas.width = Math.floor(width * dpr);
+
+      canvas.height = Math.floor(height * dpr);
 
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
@@ -304,7 +372,7 @@ function HeroCanvas() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       nodes = labels.map(([title, subtitle], i) => {
-        const angle = (i / labels.length) * Math.PI * 2;
+        const angle = (i / labels.length) * Math.PI * 2 - Math.PI / 2;
 
         const rx = width * 0.34;
         const ry = height * 0.31;
@@ -320,9 +388,11 @@ function HeroCanvas() {
             height / 2 + Math.sin(angle) * ry * (0.62 + Math.random() * 0.28),
 
           phase: Math.random() * Math.PI * 2,
+
           speed: 0.25 + Math.random() * 0.25,
 
           width: title === "Engineering Agent" ? 138 : 118,
+
           height: title === "Engineering Agent" ? 58 : 48,
 
           x: 0,
@@ -346,14 +416,31 @@ function HeroCanvas() {
     };
 
     const draw = () => {
+      if (!visible) {
+        animationFrame = requestAnimationFrame(draw);
+        return;
+      }
+
       ctx.clearRect(0, 0, width, height);
 
-      time += reduced ? 0 : 0.006;
+      if (!staticMode) {
+        time += 0.006;
+      }
 
       nodes.forEach((node) => {
-        node.x = node.baseX + Math.sin(time * node.speed * 4 + node.phase) * 12;
+        if (node.center) {
+          node.x = node.baseX;
+          node.y = node.baseY;
+          return;
+        }
 
-        node.y = node.baseY + Math.cos(time * node.speed * 3 + node.phase) * 12;
+        const movement = staticMode ? 0 : 12;
+
+        node.x =
+          node.baseX + Math.sin(time * node.speed * 4 + node.phase) * movement;
+
+        node.y =
+          node.baseY + Math.cos(time * node.speed * 3 + node.phase) * movement;
       });
 
       const center = nodes[nodes.length - 1];
@@ -389,16 +476,20 @@ function HeroCanvas() {
 
       nodes.forEach((node) => {
         const x = node.x - node.width / 2;
+
         const y = node.y - node.height / 2;
 
         ctx.save();
 
-        ctx.shadowColor = node.center
-          ? "rgba(154,108,240,.28)"
-          : "rgba(0,0,0,.3)";
+        if (!staticMode) {
+          ctx.shadowColor = node.center
+            ? "rgba(154,108,240,.28)"
+            : "rgba(0,0,0,.3)";
 
-        ctx.shadowBlur = node.center ? 28 : 18;
-        ctx.shadowOffsetY = 8;
+          ctx.shadowBlur = node.center ? 28 : 18;
+
+          ctx.shadowOffsetY = 8;
+        }
 
         roundedRect(x, y, node.width, node.height, 8);
 
@@ -409,6 +500,7 @@ function HeroCanvas() {
         ctx.fill();
 
         ctx.shadowColor = "transparent";
+
         ctx.shadowBlur = 0;
 
         roundedRect(x, y, node.width, node.height, 8);
@@ -429,13 +521,7 @@ function HeroCanvas() {
 
         ctx.fillStyle = node.center ? "#9a6cf0" : "#f2f2f5";
 
-        ctx.shadowColor = node.center ? "#9a6cf0" : "rgba(106,108,245,.6)";
-
-        ctx.shadowBlur = 8;
-
         ctx.fill();
-
-        ctx.shadowBlur = 0;
 
         ctx.font = '600 10px "Space Grotesk", sans-serif';
 
@@ -454,7 +540,6 @@ function HeroCanvas() {
 
           ctx.arc(x - 1, y + node.height / 2, 3, 0, Math.PI * 2);
 
-          ctx.fillStyle = "#0d0d14";
           ctx.strokeStyle = "rgba(106,108,245,.7)";
 
           ctx.stroke();
@@ -463,7 +548,6 @@ function HeroCanvas() {
 
           ctx.arc(x + node.width + 1, y + node.height / 2, 3, 0, Math.PI * 2);
 
-          ctx.fillStyle = "#0d0d14";
           ctx.strokeStyle = "rgba(154,108,240,.7)";
 
           ctx.stroke();
@@ -475,19 +559,38 @@ function HeroCanvas() {
       animationFrame = requestAnimationFrame(draw);
     };
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      {
+        threshold: 0,
+        rootMargin: "200px",
+      },
+    );
+
+    observer.observe(canvas);
+
     resize();
     draw();
 
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", resize, { passive: true });
 
     return () => {
       cancelAnimationFrame(animationFrame);
+
+      observer.disconnect();
+
       window.removeEventListener("resize", resize);
     };
   }, []);
 
-  return <canvas ref={ref} className="hero-canvas" />;
+  return <canvas ref={ref} className="hero-canvas" aria-hidden="true" />;
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              FINAL CANVAS                                   */
+/* -------------------------------------------------------------------------- */
 
 function FinalCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -497,7 +600,10 @@ function FinalCanvas() {
 
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", {
+      alpha: true,
+      desynchronized: true,
+    });
 
     if (!ctx) return;
 
@@ -506,6 +612,7 @@ function FinalCanvas() {
     let h = 0;
     let dpr = 1;
     let t = 0;
+    let visible = true;
 
     let nodes: Array<{
       x: number;
@@ -517,22 +624,34 @@ function FinalCanvas() {
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+    };
+
+    const lowPower =
+      (nav.deviceMemory ?? 8) <= 4 || (navigator.hardwareConcurrency ?? 8) <= 2;
+
+    const staticMode = reduced || lowPower;
+
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, staticMode ? 1 : 1.5);
 
       w = canvas.parentElement?.offsetWidth ?? window.innerWidth;
 
       h = canvas.parentElement?.offsetHeight ?? 500;
 
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+      canvas.width = Math.floor(w * dpr);
+
+      canvas.height = Math.floor(h * dpr);
 
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = Math.max(14, Math.floor(w / 90));
+      const count = staticMode
+        ? Math.max(8, Math.floor(w / 150))
+        : Math.max(14, Math.floor(w / 90));
 
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
@@ -542,17 +661,28 @@ function FinalCanvas() {
     };
 
     const draw = () => {
+      if (!visible) {
+        frame = requestAnimationFrame(draw);
+        return;
+      }
+
       ctx.clearRect(0, 0, w, h);
 
-      t += reduced ? 0 : 0.003;
+      if (!staticMode) {
+        t += 0.003;
+      }
 
       nodes.forEach((node, i) => {
-        const x = node.x + Math.sin(t + node.phase) * 10;
+        const x = node.x + (staticMode ? 0 : Math.sin(t + node.phase) * 10);
 
-        const y = node.y + Math.cos(t * 0.8 + node.phase) * 10;
+        const y =
+          node.y + (staticMode ? 0 : Math.cos(t * 0.8 + node.phase) * 10);
 
-        nodes.slice(i + 1).forEach((other) => {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const other = nodes[j];
+
           const dx = other.x - node.x;
+
           const dy = other.y - node.y;
 
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -565,10 +695,9 @@ function FinalCanvas() {
             ctx.beginPath();
             ctx.moveTo(x, y);
             ctx.lineTo(other.x, other.y);
-
             ctx.stroke();
           }
-        });
+        }
 
         ctx.beginPath();
 
@@ -582,27 +711,126 @@ function FinalCanvas() {
       frame = requestAnimationFrame(draw);
     };
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      {
+        rootMargin: "300px",
+      },
+    );
+
+    observer.observe(canvas);
+
     resize();
     draw();
 
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", resize, { passive: true });
 
     return () => {
       cancelAnimationFrame(frame);
+
+      observer.disconnect();
+
       window.removeEventListener("resize", resize);
     };
   }, []);
 
-  return <canvas ref={ref} className="final-canvas" />;
+  return <canvas ref={ref} className="final-canvas" aria-hidden="true" />;
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                STORY NODE                                   */
+/* -------------------------------------------------------------------------- */
+
+function StoryNode({
+  x,
+  y,
+  label,
+  big = false,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  big?: boolean;
+}) {
+  const w = big ? 122 : 104;
+  const h = 54;
+
+  return (
+    <g
+      className="canvas-node"
+      transform={`translate(${x - w / 2},${y - h / 2})`}
+    >
+      <rect className="node-body" width={w} height={h} rx="8" />
+
+      <rect className="node-header" width={w} height="21" rx="8" />
+
+      <rect width="3" height={h} rx="2" fill={big ? "#9a6cf0" : "#6a6cf5"} />
+
+      <circle className="node-port input" cx="0" cy={h / 2} r="3" />
+
+      <circle className="node-port output" cx={w} cy={h / 2} r="3" />
+
+      <text className="node-icon" x="11" y="15">
+        {big ? "AI" : "N"}
+      </text>
+
+      <text className="node-title" x="29" y="15">
+        {label}
+      </text>
+
+      <text className="node-subtitle" x="11" y="38">
+        {big ? "ENGINEERING AGENT" : "CAPABILITY"}
+      </text>
+
+      <circle cx={w - 12} cy="12" r="2.2" fill={big ? "#9a6cf0" : "#5cc9e8"} />
+    </g>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               HOME PAGE                                     */
+/* -------------------------------------------------------------------------- */
 
 export default function HomePage() {
   const session = authClient.useSession();
 
   useReveal();
-  useParallax();
 
   const [activeStory, setActiveStory] = useState(0);
+
+  const heroRef = useRef<HTMLElement>(null);
+
+  const { scrollY } = useScroll();
+
+  /*
+   * Global scroll depth.
+   *
+   * These values are intentionally stronger than the previous implementation.
+   * They create the feeling that the page is composed of multiple physical
+   * layers rather than simply moving elements a few pixels.
+   */
+
+  const heroY = useTransform(scrollY, [0, 900], [0, -220]);
+
+  const heroScale = useTransform(scrollY, [0, 700], [1, 0.92]);
+
+  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.15]);
+
+  const heroOrbLeftY = useTransform(scrollY, [0, 1200], [0, -320]);
+
+  const heroOrbRightY = useTransform(scrollY, [0, 1200], [0, 260]);
+
+  const heroOrbRightX = useTransform(scrollY, [0, 1200], [0, -100]);
+
+  const storyTitleY = useTransform(scrollY, [400, 1500], [80, -100]);
+
+  const storyVisualY = useTransform(scrollY, [600, 2200], [100, -140]);
+
+  const canvasTitleY = useTransform(scrollY, [2200, 3600], [120, -100]);
+
+  const philosophyY = useTransform(scrollY, [4500, 6000], [140, -160]);
 
   useEffect(() => {
     const steps = Array.from(document.querySelectorAll(".story-step"));
@@ -632,6 +860,10 @@ export default function HomePage() {
     <main className="vangrex-page">
       <div className="bg-grid" />
       <div className="noise" />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* NAV                                                                 */}
+      {/* ------------------------------------------------------------------ */}
 
       <nav className="nav">
         <div className="logo">
@@ -668,16 +900,49 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <header className="hero">
-        <div className="hero-orb hero-orb-one" data-parallax="0.12" />
+      {/* ------------------------------------------------------------------ */}
+      {/* HERO                                                                */}
+      {/* ------------------------------------------------------------------ */}
 
-        <div className="hero-orb hero-orb-two" data-parallax="-0.08" />
+      <header ref={heroRef} className="hero">
+        <motion.div
+          className="hero-orb hero-orb-one"
+          style={{
+            y: heroOrbLeftY,
+            willChange: "transform",
+          }}
+        />
 
-        <div className="hero-canvas-wrap" data-parallax="0.035">
+        <motion.div
+          className="hero-orb hero-orb-two"
+          style={{
+            y: heroOrbRightY,
+            x: heroOrbRightX,
+            willChange: "transform",
+          }}
+        />
+
+        <motion.div
+          className="hero-canvas-wrap"
+          style={{
+            y: heroY,
+            scale: heroScale,
+            opacity: heroOpacity,
+            willChange: "transform, opacity",
+          }}
+        >
           <HeroCanvas />
-        </div>
+        </motion.div>
 
-        <div className="hero-content" data-parallax="-0.045">
+        <motion.div
+          className="hero-content"
+          style={{
+            y: useTransform(scrollY, [0, 700], [0, -100]),
+            scale: useTransform(scrollY, [0, 700], [1, 0.96]),
+            opacity: heroOpacity,
+            willChange: "transform, opacity",
+          }}
+        >
           <div className="eyebrow">
             <span className="eyebrow-dot" />
             Agentic software engineering
@@ -706,25 +971,48 @@ export default function HomePage() {
               <Link href="#canvas-section">Explore Vangrex</Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="scroll-cue" data-parallax="0.08">
+        <motion.div
+          className="scroll-cue"
+          style={{
+            y: useTransform(scrollY, [0, 600], [0, 100]),
+            opacity: useTransform(scrollY, [0, 300], [1, 0]),
+          }}
+        >
           <span>SCROLL</span>
           <div className="scroll-line" />
-        </div>
+        </motion.div>
       </header>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STORY                                                               */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="section story">
         <div className="container">
-          <span className="kicker reveal">How it begins</span>
+          <motion.div
+            style={{
+              y: storyTitleY,
+            }}
+          >
+            <span className="kicker reveal">How it begins</span>
 
-          <h2 className="reveal story-heading">
-            Every software system starts with an idea.
-          </h2>
+            <h2 className="reveal story-heading">
+              Every software system starts with an idea.
+            </h2>
+          </motion.div>
         </div>
 
         <div className="container story-inner">
-          <div className="story-visual" data-parallax="0.06">
+          <motion.div
+            className="story-visual"
+            style={{
+              y: storyVisualY,
+              rotateX: useTransform(scrollY, [500, 2000], [4, -4]),
+              willChange: "transform",
+            }}
+          >
             <svg
               className="story-svg"
               viewBox="0 0 560 520"
@@ -773,7 +1061,7 @@ export default function HomePage() {
                 </>
               )}
             </svg>
-          </div>
+          </motion.div>
 
           <div className="story-steps">
             {[
@@ -820,6 +1108,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* CAPABILITIES                                                        */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="section" id="create-section">
         <div className="container">
@@ -870,11 +1162,27 @@ export default function HomePage() {
                 "Use agents to inspect implementations, identify weaknesses, suggest changes, and improve the quality of the resulting software.",
                 ["Inspect", "Review", "Improve"],
               ],
-            ].map(([tag, title, text, flow]) => (
-              <div
+            ].map(([tag, title, text, flow], index) => (
+              <motion.div
                 className="create-card"
                 key={tag as string}
-                data-parallax={"0.025"}
+                initial={{
+                  opacity: 0,
+                  y: 70,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.15,
+                }}
+                transition={{
+                  duration: 0.7,
+                  delay: index * 0.06,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
                 <div>
                   <span className="tag">{tag}</span>
@@ -895,19 +1203,28 @@ export default function HomePage() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ------------------------------------------------------------------ */}
+      {/* CANVAS                                                              */}
+      {/* ------------------------------------------------------------------ */}
+
       <section className="section canvas-section" id="canvas-section">
         <div className="container">
           <span className="kicker reveal">The engineering canvas</span>
 
-          <h2 className="reveal canvas-heading" data-parallax="-0.035">
+          <motion.h2
+            className="reveal canvas-heading"
+            style={{
+              y: canvasTitleY,
+            }}
+          >
             Your agent. Your tools. Your codebase.
-          </h2>
+          </motion.h2>
 
           <p className="lede reveal">
             Vangrex gives engineering agents a visual environment where
@@ -915,11 +1232,16 @@ export default function HomePage() {
             one system.
           </p>
 
-          <div className="canvas-visual reveal" data-parallax="0.045">
+          <Parallax
+            y={110}
+            x={-25}
+            scale={0.025}
+            className="canvas-visual reveal"
+          >
             <NodeGraph nodes={mainNodes} edges={mainEdges} />
-          </div>
+          </Parallax>
 
-          <div className="canvas-label-row reveal" data-parallax="-0.02">
+          <Parallax y={-65} x={35} className="canvas-label-row reveal">
             {[
               "AI Agent",
               "Requirements",
@@ -936,14 +1258,18 @@ export default function HomePage() {
                 {label}
               </span>
             ))}
-          </div>
+          </Parallax>
         </div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* INTELLIGENCE                                                        */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="section">
         <div className="container">
           <div className="intel-grid">
-            <div className="reveal" data-parallax="0.035">
+            <Parallax y={100} x={-40} className="reveal">
               <span className="kicker">Intelligence</span>
 
               <h2>Agents that operate inside the engineering system.</h2>
@@ -954,22 +1280,36 @@ export default function HomePage() {
                 tests, and feedback loops. Vangrex brings those capabilities
                 together.
               </p>
-            </div>
+            </Parallax>
 
-            <div className="intel-visual reveal" data-parallax="-0.045">
+            <Parallax
+              y={-120}
+              x={50}
+              scale={0.025}
+              className="intel-visual reveal"
+            >
               <NodeGraph nodes={intelNodes} edges={intelEdges} />
-            </div>
+            </Parallax>
           </div>
         </div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* CONVERGE                                                            */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="section section-tight" id="converge-section">
         <div className="container">
           <span className="kicker reveal">One engineering system</span>
 
-          <h2 className="reveal converge-heading" data-parallax="0.03">
+          <motion.h2
+            className="reveal converge-heading"
+            style={{
+              y: useTransform(scrollY, [3400, 4700], [100, -80]),
+            }}
+          >
             From requirement to production — one canvas.
-          </h2>
+          </motion.h2>
 
           <p className="lede reveal">
             Different engineering tasks, different agents, the same underlying
@@ -987,8 +1327,28 @@ export default function HomePage() {
               ["Developer", ["Context", "Agent", "Code"], "Software"],
               ["QA", ["Build", "Agent", "Tests"], "Verified system"],
               ["Reviewer", ["Repository", "Agent", "Review"], "Improvement"],
-            ].map(([role, path, output]) => (
-              <div className="converge-row" key={role as string}>
+            ].map(([role, path, output], index) => (
+              <motion.div
+                className="converge-row"
+                key={role as string}
+                initial={{
+                  opacity: 0,
+                  x: index % 2 === 0 ? -60 : 60,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  x: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.25,
+                }}
+                transition={{
+                  duration: 0.65,
+                  delay: index * 0.08,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
                 <div className="converge-role">{role}</div>
 
                 <div className="converge-path">
@@ -1002,21 +1362,41 @@ export default function HomePage() {
                 </div>
 
                 <div className="converge-out">→ {output}</div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="philosophy">
-        <div className="philosophy-orb" data-parallax="0.12" />
+      {/* ------------------------------------------------------------------ */}
+      {/* PHILOSOPHY                                                         */}
+      {/* ------------------------------------------------------------------ */}
 
-        <h2 className="reveal" data-parallax="-0.04">
+      <section className="philosophy">
+        <motion.div
+          className="philosophy-orb"
+          style={{
+            y: useTransform(scrollY, [4300, 6200], [220, -220]),
+            x: useTransform(scrollY, [4300, 6200], [-80, 80]),
+          }}
+        />
+
+        <motion.h2
+          className="reveal"
+          style={{
+            y: philosophyY,
+            scale: useTransform(scrollY, [4500, 5700], [0.92, 1.04]),
+          }}
+        >
           The future of software engineering isn't just
           <br />
           <span className="dim">writing code faster.</span>
-        </h2>
+        </motion.h2>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* RESULTS                                                             */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="section section-tight" id="results">
         <div className="container">
@@ -1029,7 +1409,7 @@ export default function HomePage() {
             can participate in the complete software development lifecycle.
           </p>
 
-          <div className="results-grid reveal" data-parallax="0.025">
+          <Parallax y={90} x={-40} scale={0.02} className="results-grid reveal">
             {[
               "Requirements",
               "Technical specifications",
@@ -1048,16 +1428,32 @@ export default function HomePage() {
                 {item}
               </span>
             ))}
-          </div>
+          </Parallax>
         </div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* FINAL                                                               */}
+      {/* ------------------------------------------------------------------ */}
 
       <section className="final">
         <FinalCanvas />
 
-        <div className="final-glow" data-parallax="0.1" />
+        <motion.div
+          className="final-glow"
+          style={{
+            y: useTransform(scrollY, [6000, 7200], [180, -180]),
+            scale: useTransform(scrollY, [6000, 7200], [0.8, 1.3]),
+          }}
+        />
 
-        <div className="final-content" data-parallax="-0.035">
+        <motion.div
+          className="final-content"
+          style={{
+            y: useTransform(scrollY, [5900, 7200], [120, -80]),
+            willChange: "transform",
+          }}
+        >
           <h2 className="reveal">What will you build?</h2>
 
           <p className="reveal">
@@ -1076,8 +1472,12 @@ export default function HomePage() {
               <Link href="#canvas-section">Explore the Canvas</Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
       </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* FOOTER                                                              */}
+      {/* ------------------------------------------------------------------ */}
 
       <footer>
         <div className="logo">
@@ -1089,6 +1489,10 @@ export default function HomePage() {
           © 2026 VANGREX — AGENTIC SOFTWARE ENGINEERING
         </div>
       </footer>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* STYLES                                                              */}
+      {/* ------------------------------------------------------------------ */}
 
       <style jsx global>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
@@ -1254,11 +1658,12 @@ export default function HomePage() {
 
         .hero-canvas-wrap {
           position: absolute;
-          inset: -8%;
+          inset: -12%;
           z-index: 0;
-          opacity: 0.12;
+          opacity: 0.13;
           pointer-events: none;
           will-change: transform;
+          transform-origin: center center;
         }
 
         .hero-canvas {
@@ -1942,7 +2347,12 @@ export default function HomePage() {
             opacity: 1;
           }
 
-          [data-parallax] {
+          /*
+           * Disable heavy continuous parallax
+           * on smaller devices.
+           */
+          .canvas-visual,
+          .intel-visual {
             transform: none !important;
           }
         }
@@ -1987,9 +2397,18 @@ export default function HomePage() {
           .final-glow {
             opacity: 0.5;
           }
+
+          .hero-canvas-wrap {
+            inset: -5%;
+            opacity: 0.08;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
+          html {
+            scroll-behavior: auto;
+          }
+
           *,
           *::before,
           *::after {
@@ -1997,57 +2416,12 @@ export default function HomePage() {
             transition: none !important;
           }
 
-          [data-parallax] {
+          .reveal {
+            opacity: 1 !important;
             transform: none !important;
           }
         }
       `}</style>
     </main>
-  );
-}
-
-function StoryNode({
-  x,
-  y,
-  label,
-  big = false,
-}: {
-  x: number;
-  y: number;
-  label: string;
-  big?: boolean;
-}) {
-  const w = big ? 122 : 104;
-  const h = 54;
-
-  return (
-    <g
-      className="canvas-node"
-      transform={`translate(${x - w / 2},${y - h / 2})`}
-    >
-      <rect className="node-body" width={w} height={h} rx="8" />
-
-      <rect className="node-header" width={w} height="21" rx="8" />
-
-      <rect width="3" height={h} rx="2" fill={big ? "#9a6cf0" : "#6a6cf5"} />
-
-      <circle className="node-port input" cx="0" cy={h / 2} r="3" />
-
-      <circle className="node-port output" cx={w} cy={h / 2} r="3" />
-
-      <text className="node-icon" x="11" y="15">
-        {big ? "AI" : "N"}
-      </text>
-
-      <text className="node-title" x="29" y="15">
-        {label}
-      </text>
-
-      <text className="node-subtitle" x="11" y="38">
-        {big ? "ENGINEERING AGENT" : "CAPABILITY"}
-      </text>
-
-      <circle cx={w - 12} cy="12" r="2.2" fill={big ? "#9a6cf0" : "#5cc9e8"} />
-    </g>
   );
 }
