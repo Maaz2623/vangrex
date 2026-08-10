@@ -17,7 +17,7 @@ const poppins = Poppins({
   weight: ["400", "500", "600"],
 });
 
-const roboto = Roboto_Mono({
+export const roboto = Roboto_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${roboto.className} h-full antialiased`}
+      className={`${poppins.className} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
