@@ -1,6 +1,9 @@
 "use client";
 
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type GraphNode = {
@@ -507,7 +510,7 @@ export default function HomePage() {
 
       <nav className="nav" id="nav">
         <div className="logo">
-          <span className="logo-mark" />
+          <Logo width={36} height={36} />
           Vangrex
         </div>
 
@@ -530,9 +533,9 @@ export default function HomePage() {
           <a href="/auth/sign-in" className="nav-signin">
             Sign In
           </a>
-          <a href="/auth/sign-in" className="btn btn-primary">
-            Start Creating
-          </a>
+          <Button className="btn btn-primary" asChild>
+            <Link href="/auth/sign-in">Start Creating</Link>
+          </Button>
         </div>
       </nav>
 
@@ -559,12 +562,16 @@ export default function HomePage() {
           </p>
 
           <div className="hero-ctas">
-            <a href="#" className="btn btn-primary btn-lg">
-              Start Creating
-            </a>
-            <a href="#canvas-section" className="btn btn-ghost btn-lg">
-              Explore Vangrex
-            </a>
+            <Button className="" size={`lg`} asChild>
+              <Link href="/auth/sign-in" className="btn btn-primary">
+                Start Creating
+              </Link>
+            </Button>
+            <Button className="" size={`lg`} variant={`outline`}>
+              <Link href="#canvas-section" className="">
+                Explore Vangrex
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -722,7 +729,7 @@ export default function HomePage() {
                 ["Your idea", "?"],
               ],
             ].map(([tag, title, text, flow]) => (
-              <div className="create-card" key={tag}>
+              <div className="create-card" key={tag as string}>
                 <div>
                   <span className="tag">{tag}</span>
                   <h4>{title}</h4>
@@ -818,7 +825,7 @@ export default function HomePage() {
               ["Creator", ["Concept", "AI", "Video"], "A reel"],
               ["Researcher", ["Question", "AI", "Knowledge"], "A report"],
             ].map(([role, path, output]) => (
-              <div className="converge-row" key={role}>
+              <div className="converge-row" key={role as string}>
                 <div className="converge-role">{role}</div>
                 <div className="converge-path">
                   {(path as string[]).map((item, i) => (
@@ -878,19 +885,23 @@ export default function HomePage() {
             Build ideas into intelligent systems with Vangrex.
           </p>
           <div className="hero-ctas reveal">
-            <a href="#" className="btn btn-primary btn-lg">
-              Start Creating
-            </a>
-            <a href="#canvas-section" className="btn btn-ghost btn-lg">
-              Explore the Canvas
-            </a>
+            <Button size={`lg`}>
+              <Link href="/auth/sign-in" className="btn btn-primary btn-lg">
+                Start Creating
+              </Link>
+            </Button>
+            <Button size={`lg`} asChild variant={`outline`}>
+              <Link href="#canvas-section" className="">
+                Explore the Canvas
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
       <footer>
         <div className="logo">
-          <span className="logo-mark" />
+          <Logo width={64} height={64} />
           Vangrex
         </div>
         <div className="muted">© 2026 VANGREX — BUILT ON THE CANVAS</div>
@@ -1032,22 +1043,8 @@ export default function HomePage() {
           gap: 22px;
         }
 
-        .btn {
-          display: inline-block;
-          padding: 10px 20px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-family: var(--body);
-          font-size: 14px;
-          font-weight: 600;
-          transition:
-            transform 0.3s ease,
-            box-shadow 0.3s ease,
-            background 0.3s ease;
-        }
         .btn-primary {
           color: white;
-          background: linear-gradient(135deg, var(--indigo), var(--violet));
         }
         .btn-primary:hover {
           transform: translateY(-2px);
@@ -1061,11 +1058,6 @@ export default function HomePage() {
         .btn-ghost:hover {
           border-color: var(--indigo);
           background: rgba(106, 108, 245, 0.06);
-        }
-        .btn-lg {
-          padding: 14px 28px;
-          font-size: 15px;
-          border-radius: 10px;
         }
 
         .hero {
@@ -1697,11 +1689,10 @@ function StoryNode({
       <rect className="node-body" width={w} height={h} rx="8" />
       <rect className="node-header" width={w} height="20" rx="8" />
       <rect
-        className="node-accent"
+        className="node-accen bg-primary fill-primary"
         width="3"
         height={h}
         rx="2"
-        fill={big ? "#9a6cf0" : "#6a6cf5"}
       />
       <circle className="node-port input" cx="0" cy={h / 2} r="3" />
       <circle className="node-port output" cx={w} cy={h / 2} r="3" />

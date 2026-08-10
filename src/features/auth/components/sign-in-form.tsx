@@ -23,7 +23,7 @@ export const SignInForm = () => {
         <CardHeader className="space-y-6 text-center">
           {/* Vangrex Logo */}
           <div className="mx-auto flex size-12 items-center justify-center">
-            <Logo />
+            <Logo height={100} width={100} />
           </div>
 
           <div className="space-y-2">

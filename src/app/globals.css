@@ -189,3 +189,41 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* ============================================
+   VANGREX CUSTOM SCROLLBAR
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(106, 108, 245, 0.65) transparent;
+}
+
+/* Chrome / Edge / Safari / Opera */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(106, 108, 245, 0.55);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #6a6cf5, #9a6cf0);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
