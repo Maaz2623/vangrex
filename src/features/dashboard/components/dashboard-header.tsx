@@ -1,0 +1,54 @@
+"use client";
+
+import Link from "next/link";
+import { Bell, Search } from "lucide-react";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/logo";
+
+export const DashboardHeader = () => {
+  return (
+    <header className="flex rounded-xl h-14 w-full shrink-0 items-center border-b bg-background px-4 lg:px-6">
+      {/* Logo */}
+      <Link
+        href="/dashboard"
+        className="flex items-center font-semibold tracking-tight"
+      >
+        <Logo height={30} width={30} />
+
+        <span>Vangrex</span>
+      </Link>
+
+      <div className="ml-auto flex items-center gap-1">
+        {/* Search */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden gap-2 text-muted-foreground sm:flex"
+        >
+          <Search className="size-4" />
+          <span>Search</span>
+
+          <kbd className="ml-2 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">
+            ⌘ K
+          </kbd>
+        </Button>
+
+        <Separator orientation="vertical" className="mx-2 h-5" />
+
+        {/* Notifications */}
+        <Button variant="ghost" size="icon" className="size-8">
+          <Bell className="size-4" />
+          <span className="sr-only">Notifications</span>
+        </Button>
+
+        {/* User */}
+        <Avatar className="ml-1 size-8">
+          <AvatarFallback className="text-xs">VG</AvatarFallback>
+        </Avatar>
+      </div>
+    </header>
+  );
+};
