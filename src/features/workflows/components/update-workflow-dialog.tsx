@@ -23,13 +23,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { useCreateWorkflow } from "../hooks/use-workflows";
+import { useCreateWorkflow, useUpdateWorkflow } from "../hooks/use-workflows";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface Props {
   open: boolean;
   setOpen: (open: boolean) => void;
+  defaultName: string;
+  defaultDescription: string | null;
+  workflowId: string;
 }
 
 const useIsMobile = () => {
@@ -53,30 +56,34 @@ const useIsMobile = () => {
   return isMobile;
 };
 
-export const CreateWorkflowDialog = ({ open, setOpen }: Props) => {
+export const UpdateWorkflowDialog = ({
+  open,
+  setOpen,
+  defaultName,
+  defaultDescription,
+  workflowId,
+}: Props) => {
   const isMobile = useIsMobile();
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(defaultName);
+  const [description, setDescription] = useState(defaultDescription);
 
-  const createMutation = useCreateWorkflow();
+  const updateMutaiton = useUpdateWorkflow();
 
   const router = useRouter();
 
   const handleSubmit = () => {
     if (!name.trim()) return;
 
-    createMutation.mutate(
+    updateMutaiton.mutate(
       {
         name: name,
-        description: description,
+        description: description || "",
+        workflowId: workflowId,
       },
       {
         onSuccess: (data) => {
-          setName("");
-          setDescription("");
-          toast.success("Workflow created.");
-          router.push(`/dashboard/workflows/${data.id}`);
+          toast.success("Workflow updated.");
         },
         onError: () => {
           toast.error("Something went wrong.");
@@ -118,7 +125,7 @@ export const CreateWorkflowDialog = ({ open, setOpen }: Props) => {
 
         <Textarea
           id="workflow-description"
-          value={description}
+          value={description || ""}
           onChange={(event) => setDescription(event.target.value)}
           placeholder="What does this workflow do?"
           className="min-h-24 resize-none"
@@ -138,7 +145,7 @@ export const CreateWorkflowDialog = ({ open, setOpen }: Props) => {
       </Button>
 
       <Button type="button" disabled={!name.trim()} onClick={handleSubmit}>
-        Create workflow
+        Update
       </Button>
     </div>
   );
@@ -166,9 +173,9 @@ export const CreateWorkflowDialog = ({ open, setOpen }: Props) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create workflow</DialogTitle>
+          <DialogTitle>Edit workflow</DialogTitle>
           <DialogDescription>
-            Start with a name and optional description.
+            Update the name and description of your workflow.
           </DialogDescription>
         </DialogHeader>
 

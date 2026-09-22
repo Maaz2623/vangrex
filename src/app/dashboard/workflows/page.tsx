@@ -1,11 +1,14 @@
-import { WorkflowsHeader } from "@/features/workflows/components/workflows-header";
-import { WorkflowsList } from "@/features/workflows/components/workflows-list";
 import { WorkflowsView } from "@/features/workflows/components/workflows-view";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import React from "react";
 
 const WorkflowsPage = () => {
+  prefetch(trpc.workflows.getWorkflows.queryOptions());
+
   return (
-    <WorkflowsView />
+    <HydrateClient>
+      <WorkflowsView />
+    </HydrateClient>
   );
 };
 

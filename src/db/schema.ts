@@ -1,5 +1,38 @@
 import { defineRelations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+export const workflowsTable = pgTable(
+  "workflows",
+  {
+    id: uuid("id").notNull().primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, {
+        onDelete: "cascade",
+      }),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("workflows_user_id_idx").on(table.userId)],
+);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -74,7 +107,7 @@ export const verification = pgTable(
 );
 
 export const relations = defineRelations(
-  { user, account, verification, session },
+  { user, account, verification, session, workflowsTable },
   (r) => ({
     user: {
       sessions: r.many.session({
@@ -84,6 +117,10 @@ export const relations = defineRelations(
       accounts: r.many.account({
         from: r.user.id,
         to: r.account.userId,
+      }),
+      workflows: r.many.workflowsTable({
+        from: r.user.id,
+        to: r.workflowsTable.userId,
       }),
     },
     session: {
@@ -96,6 +133,13 @@ export const relations = defineRelations(
     account: {
       user: r.one.user({
         from: r.account.userId,
+        to: r.user.id,
+        optional: false,
+      }),
+    },
+    workflowsTable: {
+      user: r.one.user({
+        from: r.workflowsTable.userId,
         to: r.user.id,
         optional: false,
       }),
