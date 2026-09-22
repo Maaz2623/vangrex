@@ -15,27 +15,36 @@ type Item = {
   title: string;
   href: string;
   icon?: LucideIcon;
+  exact?: boolean;
 };
 
 export function NavMain({ items }: { items: Item[] }) {
   const pathname = usePathname();
 
+  const activeHref = items
+    .filter((item) => {
+      if (item.exact) {
+        return pathname === item.href;
+      }
+
+      return pathname === item.href || pathname.startsWith(`${item.href}/`);
+    })
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   return (
     <SidebarMenu>
       {items.map((item) => {
-        const href = item.href;
-
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const active = item.href === activeHref;
 
         return (
-          <SidebarMenuItem key={href}>
+          <SidebarMenuItem key={item.href}>
             <SidebarMenuButton
               asChild
               isActive={active}
               className="h-10"
               tooltip={item.title}
             >
-              <Link href={href}>
+              <Link href={item.href}>
                 {item.icon && <item.icon className="size-4" />}
                 <span>{item.title}</span>
               </Link>
