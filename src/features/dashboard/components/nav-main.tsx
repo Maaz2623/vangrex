@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+
 import type { LucideIcon } from "lucide-react";
 
 import {
@@ -19,21 +20,10 @@ type Item = {
 export function NavMain({ items }: { items: Item[] }) {
   const pathname = usePathname();
 
-  const { projectId, workflowId } = useParams<{
-    projectId?: string;
-    workflowId?: string;
-  }>();
-
   return (
     <SidebarMenu>
       {items.map((item) => {
-        let href = item.href;
-
-        if (workflowId) {
-          href = `/projects/${projectId}/workflows/${workflowId}/${item.href}`;
-        } else if (projectId) {
-          href = `/projects/${projectId}/${item.href}`;
-        }
+        const href = item.href;
 
         const active = pathname === href || pathname.startsWith(`${href}/`);
 
