@@ -1,11 +1,15 @@
-import React from 'react'
+import { CanvasView } from "@/features/canvas/components/canvas-view";
 
-const CanvasPage = () => {
-  return (
-    <div>
-      CanvasPage
-    </div>
-  )
+interface Props {
+  params: Promise<{
+    workflowId: string;
+  }>;
 }
 
-export default CanvasPage
+const CanvasPage = async ({ params }: Props) => {
+  const { workflowId } = await params;
+
+  return <CanvasView workflowId={workflowId} />;
+};
+
+export default CanvasPage;
