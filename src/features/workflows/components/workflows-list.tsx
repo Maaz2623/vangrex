@@ -177,21 +177,31 @@ const executionConfig = {
   },
 };
 
+interface Props {
+  search: string;
+  setSearch: (search: string) => void;
+}
 
-export const WorkflowsList = () => {
+export const WorkflowsList = ({ search, setSearch }: Props) => {
   const router = useRouter();
 
   return (
     <div className="w-full overflow-hidden rounded-xl">
       <ScrollArea className="h-[calc(100vh)] scrollbar-none!">
         <div className="flex flex-col gap-y-3 pb-[50vh] sm:gap-y-4">
-          {workflows.map((workflow) => (
-            <WorkflowRow
-              key={workflow.id}
-              {...workflow}
-              onClick={() => router.push(`/dashboard/workflows/${workflow.id}`)}
-            />
-          ))}
+          {workflows
+            .filter((workflow) =>
+              workflow.name.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map((workflow) => (
+              <WorkflowRow
+                key={workflow.id}
+                {...workflow}
+                onClick={() =>
+                  router.push(`/dashboard/workflows/${workflow.id}`)
+                }
+              />
+            ))}
         </div>
       </ScrollArea>
     </div>
@@ -218,7 +228,7 @@ const WorkflowRow = ({
   return (
     <div
       onClick={onClick}
-      className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-background px-3 py-3 transition-colors hover:bg-muted/40 sm:px-4 sm:py-3.5"
+      className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-background px-3 py-3 transition-colors hover:bg-background/60 sm:px-4 sm:py-3.5"
     >
       {/* Icon */}
       <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/30 sm:size-10">
