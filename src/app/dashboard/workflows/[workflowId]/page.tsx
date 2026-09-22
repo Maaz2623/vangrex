@@ -1,7 +1,17 @@
-import React from "react";
+import { WorkflowOverview } from "@/features/workflows/components/workflow-overview";
 
-const WorkflowIdPage = () => {
-  return <div>WorkflowId Page</div>;
+interface Props {
+  params: Promise<{
+    workflowId: string
+  }>
+}
+
+
+const WorkflowIdPage = async ({params}: Props) => {
+
+  const {workflowId} = await params
+
+  return <WorkflowOverview workflowId={workflowId} />;
 };
 
 export default WorkflowIdPage;

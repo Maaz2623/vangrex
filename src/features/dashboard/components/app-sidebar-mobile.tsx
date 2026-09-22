@@ -1,44 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 import {
-  BadgeCheck,
-  Bell,
+  ActivityIcon,
+  ArrowLeft,
   BookOpenIcon,
   ChevronsUpDown,
   Code2Icon,
-  CreditCard,
-  HistoryIcon,
+  KeyRoundIcon,
+  LayoutDashboardIcon,
   LogOut,
   SettingsIcon,
-  Sparkles,
   WebhookIcon,
   WorkflowIcon,
 } from "lucide-react";
 
 import { Logo } from "@/components/logo";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { authClient } from "@/lib/auth-client";
+
 import { AuthUser } from "@/features/auth/types/auth.types";
 
 interface AppSidebarMobileProps {
@@ -58,6 +62,16 @@ export function AppSidebarMobile({
 }: AppSidebarMobileProps) {
   const { data } = authClient.useSession();
 
+  const params = useParams<{
+    workflowId?: string;
+  }>();
+
+  const workflowId = params.workflowId;
+
+  const isWorkflowPage = Boolean(
+    workflowId && usePathname().startsWith("/dashboard/workflows/"),
+  );
+
   const workspaceNav: NavItem[] = [
     {
       title: "Workflows",
@@ -67,7 +81,7 @@ export function AppSidebarMobile({
     {
       title: "Executions",
       href: "/dashboard/executions",
-      icon: HistoryIcon,
+      icon: ActivityIcon,
     },
   ];
 
@@ -100,12 +114,39 @@ export function AppSidebarMobile({
     },
   ];
 
+  const workflowNav: NavItem[] = workflowId
+    ? [
+        {
+          title: "Overview",
+          href: `/dashboard/workflows/${workflowId}`,
+          icon: LayoutDashboardIcon,
+        },
+        {
+          title: "Canvas",
+          href: `/dashboard/workflows/${workflowId}/canvas`,
+          icon: WorkflowIcon,
+        },
+        {
+          title: "Executions",
+          href: `/dashboard/workflows/${workflowId}/executions`,
+          icon: ActivityIcon,
+        },
+        {
+          title: "API Keys",
+          href: `/dashboard/workflows/${workflowId}/api-keys`,
+          icon: KeyRoundIcon,
+        },
+        {
+          title: "Settings",
+          href: `/dashboard/workflows/${workflowId}/settings`,
+          icon: SettingsIcon,
+        },
+      ]
+    : [];
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="left"
-        className="w-[280px] gap-0 p-0 sm:w-[300px]"
-      >
+      <SheetContent side="left" className="w-[280px] gap-0 p-0 sm:w-[300px]">
         {/* Header */}
         <SheetHeader className="h-14 border-b px-4">
           <SheetTitle asChild>
@@ -122,41 +163,76 @@ export function AppSidebarMobile({
 
         {/* Navigation */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-3">
-          <MobileNavSection
-            label="Workspace"
-            items={workspaceNav}
-            onNavigate={() => onOpenChange(false)}
-          />
+          {isWorkflowPage && workflowId ? (
+            <>
+              <MobileNavSection
+                label="Workflow"
+                items={workflowNav}
+                onNavigate={() => onOpenChange(false)}
+              />
 
-          <MobileNavSection
-            label="Developer"
-            items={developerNav}
-            onNavigate={() => onOpenChange(false)}
-          />
+              <div className="mt-1">
+                <Link
+                  href="/dashboard/workflows"
+                  onClick={() => onOpenChange(false)}
+                  className="flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <ArrowLeft className="size-4 shrink-0" />
+                  <span>Back to Workflows</span>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <MobileNavSection
+                label="Workspace"
+                items={workspaceNav}
+                onNavigate={() => onOpenChange(false)}
+              />
 
-          <MobileNavSection
-            label="Resources"
-            items={resourcesNav}
-            onNavigate={() => onOpenChange(false)}
-          />
+              <MobileNavSection
+                label="Developer"
+                items={developerNav}
+                onNavigate={() => onOpenChange(false)}
+              />
+
+              <MobileNavSection
+                label="Resources"
+                items={resourcesNav}
+                onNavigate={() => onOpenChange(false)}
+              />
+            </>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="border-t p-2">
-          <MobileNavSection
-            label={undefined}
-            items={settingsNav}
-            onNavigate={() => onOpenChange(false)}
-          />
+        {!isWorkflowPage && (
+          <div className="border-t p-2">
+            <MobileNavSection
+              label={undefined}
+              items={settingsNav}
+              onNavigate={() => onOpenChange(false)}
+            />
 
-          <div className="mt-1">
+            <div className="mt-1">
+              {data?.user ? (
+                <MobileNavUser user={data.user} />
+              ) : (
+                <MobileNavUserSkeleton />
+              )}
+            </div>
+          </div>
+        )}
+
+        {isWorkflowPage && (
+          <div className="border-t p-2">
             {data?.user ? (
               <MobileNavUser user={data.user} />
             ) : (
               <MobileNavUserSkeleton />
             )}
           </div>
-        </div>
+        )}
       </SheetContent>
     </Sheet>
   );
@@ -181,11 +257,7 @@ function MobileNavSection({
 
       <nav className="space-y-1">
         {items.map((item) => (
-          <MobileNavItem
-            key={item.href}
-            item={item}
-            onNavigate={onNavigate}
-          />
+          <MobileNavItem key={item.href} item={item} onNavigate={onNavigate} />
         ))}
       </nav>
     </div>
@@ -200,11 +272,10 @@ function MobileNavItem({
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
-  const Icon = item.icon;
 
-  const active =
-    pathname === item.href ||
-    pathname.startsWith(`${item.href}/`);
+  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+  const Icon = item.icon;
 
   return (
     <Link
@@ -214,7 +285,7 @@ function MobileNavItem({
         "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm transition-colors",
         "hover:bg-accent hover:text-accent-foreground",
         active
-          ? "bg-accent text-accent-foreground font-medium"
+          ? "bg-accent font-medium text-accent-foreground"
           : "text-muted-foreground",
       ].join(" ")}
     >
@@ -233,19 +304,15 @@ function MobileNavUser({ user }: { user: AuthUser }) {
           className="h-auto w-full justify-start gap-3 px-2 py-2"
         >
           <Avatar className="h-8 w-8 shrink-0 rounded-lg">
-            <AvatarImage
-              src={user.image || "/logo.svg"}
-              alt={user.name}
-            />
+            <AvatarImage src={user.image || "/logo.svg"} alt={user.name} />
+
             <AvatarFallback className="rounded-lg">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
 
           <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium">
-              {user.name}
-            </span>
+            <span className="truncate font-medium">{user.name}</span>
 
             <span className="truncate text-xs text-muted-foreground">
               {user.email}
@@ -265,10 +332,7 @@ function MobileNavUser({ user }: { user: AuthUser }) {
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarImage
-                src={user.image || "/logo.svg"}
-                alt={user.name}
-              />
+              <AvatarImage src={user.image || "/logo.svg"} alt={user.name} />
 
               <AvatarFallback className="rounded-lg">
                 {getInitials(user.name)}
@@ -276,9 +340,7 @@ function MobileNavUser({ user }: { user: AuthUser }) {
             </Avatar>
 
             <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">
-                {user.name}
-              </span>
+              <span className="truncate font-medium">{user.name}</span>
 
               <span className="truncate text-xs text-muted-foreground">
                 {user.email}
@@ -288,36 +350,6 @@ function MobileNavUser({ user }: { user: AuthUser }) {
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
-
-        {/*
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Sparkles />
-            Upgrade to Pro
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <BadgeCheck />
-            Account
-          </DropdownMenuItem>
-
-          <DropdownMenuItem>
-            <CreditCard />
-            Billing
-          </DropdownMenuItem>
-
-          <DropdownMenuItem>
-            <Bell />
-            Notifications
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-        */}
 
         <DropdownMenuItem>
           <LogOut />

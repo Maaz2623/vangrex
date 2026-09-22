@@ -21,7 +21,7 @@ export const DashboardHeader = () => {
         onOpenChange={setMobileSidebarOpen}
       />
 
-      <header className="flex h-14 w-full shrink-0 items-center rounded-xl border-b bg-background px-4 lg:px-6">
+      <header className="flex h-14 w-full shrink-0 items-center rounded-xl border bg-background px-4 lg:px-6">
         {/* Mobile menu */}
         <Button
           variant="ghost"
