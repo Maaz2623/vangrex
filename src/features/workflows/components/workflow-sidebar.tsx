@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { NavMain } from "@/features/dashboard/components/nav-main";
+import { Button } from "@/components/ui/button";
 
 const motionTransition: Transition = {
   duration: 0.22,
@@ -75,13 +76,15 @@ export function WorkflowSidebar({ workflowId }: Props) {
           animate={{ opacity: 1, x: 0 }}
           transition={motionTransition}
         >
-          <Link
-            href="/dashboard/workflows"
-            className="flex h-10 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <ArrowLeft className="size-4 shrink-0" />
-            <span>Back to Workflows</span>
-          </Link>
+          <Button asChild variant={`outline`} className="w-full flex justify-start">
+            <Link
+              href="/dashboard/workflows"
+              className="flex h-10 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <ArrowLeft className="size-4 shrink-0" />
+              <span>Back to Workflows</span>
+            </Link>
+          </Button>
         </motion.div>
       </SidebarHeader>
 
