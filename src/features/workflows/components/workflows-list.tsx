@@ -32,6 +32,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRouter } from "next/navigation";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const workflows = [
   {
@@ -175,154 +177,103 @@ const executionConfig = {
   },
 };
 
-export const WorkflowsList = () => {
-  return (
-    <div className="w-full overflow-hidden rounded-xl border bg-background">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-4 border-b px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-sm">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
-          <Input placeholder="Search workflows..." className="h-9 pl-9" />
+export const WorkflowsList = () => {
+  const router = useRouter();
+
+  return (
+    <div className="w-full overflow-hidden rounded-xl">
+      <ScrollArea className="h-[calc(100vh)] scrollbar-none!">
+        <div className="flex flex-col gap-y-3 pb-[50vh] sm:gap-y-4">
+          {workflows.map((workflow) => (
+            <WorkflowRow
+              key={workflow.id}
+              {...workflow}
+              onClick={() => router.push(`/dashboard/workflows/${workflow.id}`)}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
+
+interface WorkflowRowProps {
+  id: string;
+  name: string;
+  description: string;
+  status?: string;
+  updated?: string;
+  onClick?: () => void;
+}
+
+const WorkflowRow = ({
+  id,
+  name,
+  description,
+  status,
+  updated,
+  onClick,
+}: WorkflowRowProps) => {
+  return (
+    <div
+      onClick={onClick}
+      className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border bg-background px-3 py-3 transition-colors hover:bg-muted/40 sm:px-4 sm:py-3.5"
+    >
+      {/* Icon */}
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/30 sm:size-10">
+        <GitBranch className="size-4 text-muted-foreground" />
+      </div>
+
+      {/* Main content */}
+      <div className="min-w-0 flex-1">
+        {/* Name */}
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-medium">{name}</p>
+
+          {/* ID only on larger screens */}
+          {id && (
+            <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+              {id}
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <SlidersHorizontal className="size-4" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
+        {/* Description */}
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground sm:truncate">
+          {description}
+        </p>
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>All workflows</DropdownMenuItem>
-              <DropdownMenuItem>Active</DropdownMenuItem>
-              <DropdownMenuItem>Draft</DropdownMenuItem>
-              <DropdownMenuItem>Error</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Metadata only on larger screens */}
+        <div className="mt-1.5 hidden items-center gap-3 sm:flex">
+          {status && (
+            <span className="text-xs text-muted-foreground">{status}</span>
+          )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <ArrowUpDown className="size-4" />
-                Sort
-              </Button>
-            </DropdownMenuTrigger>
+          {status && updated && (
+            <span className="size-1 rounded-full bg-muted-foreground/40" />
+          )}
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Recently updated</DropdownMenuItem>
-              <DropdownMenuItem>Name: A–Z</DropdownMenuItem>
-              <DropdownMenuItem>Name: Z–A</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Oldest updated</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {updated && (
+            <span className="text-xs text-muted-foreground">{updated}</span>
+          )}
         </div>
       </div>
 
-      {/* Scrollable table */}
-      <div className="max-h-[calc(100vh-15rem)] overflow-auto">
-        <Table className="">
-          <TableHeader className="sticky top-0 z-10 bg-background">
-            <TableRow>
-              <TableHead className="w-[40%]">Workflow</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last execution</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="w-12" />
-            </TableRow>
-          </TableHeader>
+      {/* Actions */}
+      <div
+        className="ml-1 shrink-0 sm:ml-3"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+        >
+          <Ellipsis className="size-4" />
 
-          <TableBody className="">
-            {workflows.map((workflow) => {
-              const execution =
-                executionConfig[
-                  workflow.execution as keyof typeof executionConfig
-                ];
-
-              const ExecutionIcon = execution.icon;
-
-              return (
-                <TableRow key={workflow.id} className="group">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/30">
-                        <GitBranch className="size-4 text-muted-foreground" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate font-medium">
-                            {workflow.name}
-                          </p>
-
-                          <Badge
-                            variant={
-                              workflow.status === "Error"
-                                ? "destructive"
-                                : workflow.status === "Active"
-                                  ? "default"
-                                  : "secondary"
-                            }
-                          >
-                            {workflow.status}
-                          </Badge>
-                        </div>
-
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {workflow.description}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <ExecutionIcon
-                        className={`size-4 ${execution.className}`}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {workflow.execution}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="text-sm text-muted-foreground">
-                    {workflow.execution === "Never executed"
-                      ? "—"
-                      : workflow.updated}
-                  </TableCell>
-
-                  <TableCell className="text-sm text-muted-foreground">
-                    {workflow.updated}
-                  </TableCell>
-
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Ellipsis className="size-4" />
-                          <span className="sr-only">Open workflow menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Open workflow</DropdownMenuItem>
-                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+          <span className="sr-only">Open workflow menu</span>
+        </Button>
       </div>
     </div>
   );
