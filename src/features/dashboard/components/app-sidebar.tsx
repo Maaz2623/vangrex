@@ -64,13 +64,13 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-18 ml-3 h-[calc(100vh-5.5rem)] border rounded-xl overflow-visible! mt-1 "
+      className="top-18 ml-3 h-[calc(100vh-5.5rem)] border rounded-xl mt-1 "
     >
       <SidebarRail />
 
       <SidebarHeader />
 
-      <SidebarContent>
+      <SidebarContent className="">
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <NavMain items={workspaceNav} />
