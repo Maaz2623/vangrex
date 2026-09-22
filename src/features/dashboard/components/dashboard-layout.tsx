@@ -13,9 +13,9 @@ export const DashboardLayout = ({
   return (
     <div className="flex h-dvh flex-col p-3 overflow-hidden">
       {/* Fixed header */}
-      <DashboardHeader />
 
       {/* Remaining viewport height */}
+      <DashboardHeader />
       <SidebarProvider className="min-h-0 flex-1 ">
         <AppSidebar />
 
