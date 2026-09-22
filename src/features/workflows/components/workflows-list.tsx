@@ -157,8 +157,11 @@ const WorkflowRow = ({
 
             {id && (
               <div className="hidden min-w-0 shrink-0 items-center gap-1 sm:flex">
-                <span className="truncate text-xs text-muted-foreground">
-                  {id}
+                <span
+                  className="max-w-32 truncate text-xs text-muted-foreground"
+                  title={id}
+                >
+                  {id.length > 16 ? `${id.slice(0, 8)}…${id.slice(-6)}` : id}
                 </span>
 
                 <Button
