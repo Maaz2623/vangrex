@@ -1,10 +1,10 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Node, Position } from "@xyflow/react";
 
-import { nodeRegistry, type NodeType } from "../registry";
+import { nodeRegistry } from "../registry";
+import { VangrexNodeData } from "../types/node-data";
 
-export const CanvasNode = ({ data, selected }: NodeProps) => {
-  const nodeType = data.type as NodeType;
-  const definition = nodeRegistry.get(nodeType);
+export const CanvasNode = ({ data, selected }: Node<VangrexNodeData>) => {
+  const definition = nodeRegistry.get(data.type);
 
   const Icon = definition.icon;
 
@@ -20,14 +20,15 @@ export const CanvasNode = ({ data, selected }: NodeProps) => {
         selected ? "border-foreground/30 shadow-md" : "border-border",
       ].join(" ")}
     >
-      {/* Header */}
       <div className="flex items-center gap-3 px-3.5 py-3">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/50 text-muted-foreground">
           <Icon className="size-4" />
         </div>
 
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{definition.name}</p>
+          <p className="truncate text-sm font-medium">
+            {data.label || definition.name}
+          </p>
 
           <p className="mt-0.5 text-[11px] capitalize text-muted-foreground">
             {definition.category}
@@ -35,7 +36,6 @@ export const CanvasNode = ({ data, selected }: NodeProps) => {
         </div>
       </div>
 
-      {/* Ports */}
       {(inputs.length > 0 || outputs.length > 0) && (
         <div
           className="relative border-t"
@@ -43,7 +43,6 @@ export const CanvasNode = ({ data, selected }: NodeProps) => {
             height: `${portCount * 28 + 12}px`,
           }}
         >
-          {/* Inputs */}
           {inputs.map((input, index) => (
             <div
               key={`input-${input.id}`}
@@ -65,7 +64,6 @@ export const CanvasNode = ({ data, selected }: NodeProps) => {
             </div>
           ))}
 
-          {/* Outputs */}
           {outputs.map((output, index) => (
             <div
               key={`output-${output.id}`}

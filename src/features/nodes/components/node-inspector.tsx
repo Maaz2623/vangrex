@@ -19,9 +19,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { nodeRegistry } from "@/features/nodes";
 import { NodeType } from "../registry";
+import { VangrexNode } from "../types/node-data";
 
 interface Props {
-  node: Node;
+  node: VangrexNode;
   onUpdate: (nodeId: string, data: Record<string, unknown>) => void;
   onDelete: (nodeId: string) => void;
   onClose: () => void;

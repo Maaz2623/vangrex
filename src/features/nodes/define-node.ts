@@ -1,10 +1,8 @@
 import type { LucideIcon } from "lucide-react";
-import type { ZodType } from "zod";
 
-import {
-  defineNode as defineSdkNode,
-  type NodeDefinition,
-} from "@vangrex/node-sdk";
+import type { ZodType, z } from "zod";
+
+import type { NodeDefinition } from "@vangrex/node-sdk";
 
 export interface ConfigField {
   key: string;
@@ -26,8 +24,11 @@ export interface VangrexNodeDefinition<
   category: string;
   icon: LucideIcon;
   config: TConfig;
+  defaultConfig: z.infer<TConfig>;
   configFields?: ConfigField[];
 }
+
+export type NodeConfig<T extends VangrexNodeDefinition> = z.infer<T["config"]>;
 
 export function defineNode<
   TInput extends ZodType,
@@ -36,9 +37,5 @@ export function defineNode<
 >(
   definition: VangrexNodeDefinition<TInput, TOutput, TConfig>,
 ): VangrexNodeDefinition<TInput, TOutput, TConfig> {
-  return defineSdkNode(definition) as VangrexNodeDefinition<
-    TInput,
-    TOutput,
-    TConfig
-  >;
+  return definition;
 }

@@ -12,82 +12,227 @@ import {
   ReactFlow,
   type Connection,
   type Edge,
-  type Node,
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
 
+import { GitBranch, Plus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { GitBranch, Plus, WineOff } from "lucide-react";
+
 import { AddNodeDialog } from "@/features/nodes/components/add-node-dialog";
-import { NodeDialog } from "@/features/nodes/components/node-dialog";
-import { nodeRegistry } from "@/features/nodes";
-import { toCanvasNode } from "@/features/nodes/utils/to-canvas-node";
-import { NodeType } from "@/features/nodes/registry";
-import { CanvasNode } from "@/features/nodes/components/canvas-node";
 import { NodeInspector } from "@/features/nodes/components/node-inspector";
+import { CanvasNode } from "@/features/nodes/components/canvas-node";
+
+import { nodeRegistry } from "@/features/nodes";
+import { NodeType } from "@/features/nodes/registry";
+
+import { VangrexNode, VangrexNodeData } from "@/features/nodes/types/node-data";
+
+import { toCanvasNode } from "@/features/nodes/utils/to-canvas-node";
+
+import {
+  useCreateNode,
+  useDeleteNode,
+  useNodes,
+  useUpdateNode,
+} from "@/features/nodes/hooks/use-nodes";
+
+import {
+  useCreateEdge,
+  useDeleteEdge,
+  useEdges,
+} from "@/features/edges/hooks/use-edges";
 
 interface Props {
   workflowId: string;
 }
 
 export const Canvas = ({ workflowId }: Props) => {
-  const [nodes, setNodes] = useState<Node[]>([]);
+  const [nodes, setNodes] = useState<VangrexNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
   const [addNodeOpen, setAddNodeOpen] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<VangrexNode | null>(null);
 
-  const onNodesChange: OnNodesChange = useCallback((changes) => {
-    setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot));
+  const { data: savedNodes } = useNodes(workflowId);
+  const { data: savedEdges } = useEdges(workflowId);
+
+  const createNode = useCreateNode();
+  const updateNode = useUpdateNode();
+  const deleteNode = useDeleteNode();
+
+  const createEdge = useCreateEdge();
+  const deleteEdge = useDeleteEdge();
+
+  /*
+   * Hydrate nodes from the database.
+   */
+  useEffect(() => {
+    if (!savedNodes) return;
+
+    const canvasNodes = savedNodes
+      .map((node) => toCanvasNode(node))
+      .filter((node): node is VangrexNode => node !== null);
+
+    setNodes(canvasNodes);
+  }, [savedNodes]);
+
+  /*
+   * Hydrate edges from the database.
+   */
+  useEffect(() => {
+    if (!savedEdges) return;
+
+    setEdges(
+      savedEdges.map((edge) => ({
+        id: edge.id,
+        source: edge.sourceNodeId,
+        target: edge.targetNodeId,
+        sourceHandle: edge.sourceHandle ?? undefined,
+        targetHandle: edge.targetHandle ?? undefined,
+      })),
+    );
+  }, [savedEdges]);
+
+  /*
+   * React Flow node changes.
+   *
+   * Position persistence happens in onNodeDragStop,
+   * not on every node change.
+   */
+  const onNodesChange: OnNodesChange<VangrexNode> = useCallback((changes) => {
+    setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
   }, []);
 
+  /*
+   * React Flow edge changes.
+   */
   const onEdgesChange: OnEdgesChange = useCallback((changes) => {
-    setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot));
+    setEdges((currentEdges) => applyEdgeChanges(changes, currentEdges));
   }, []);
 
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((edgesSnapshot) => addEdge(connection, edgesSnapshot));
-  }, []);
+  /*
+   * Persist node position after dragging.
+   */
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: VangrexNode) => {
+      updateNode.mutate({
+        workflowId,
+        nodeId: node.id,
+        position: node.position,
+      });
+    },
+    [updateNode, workflowId],
+  );
 
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-  }, []);
+  /*
+   * Create a persisted edge.
+   */
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const id = crypto.randomUUID();
 
-  const nodeTypes = useMemo(
-    () => ({
-      vangrex: CanvasNode,
-    }),
+      const edge: Edge = {
+        id,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle ?? undefined,
+        targetHandle: connection.targetHandle ?? undefined,
+      };
+
+      setEdges((currentEdges) => addEdge(edge, currentEdges));
+
+      createEdge.mutate({
+        workflowId,
+        edge: {
+          id,
+          sourceNodeId: connection.source,
+          targetNodeId: connection.target,
+          sourceHandle: connection.sourceHandle ?? null,
+          targetHandle: connection.targetHandle ?? null,
+        },
+      });
+    },
+    [createEdge, workflowId],
+  );
+
+  /*
+   * Persist edge deletion.
+   */
+  const onEdgesDelete = useCallback(
+    (deletedEdges: Edge[]) => {
+      for (const edge of deletedEdges) {
+        deleteEdge.mutate({
+          workflowId,
+          edgeId: edge.id,
+        });
+      }
+    },
+    [deleteEdge, workflowId],
+  );
+
+  /*
+   * Select node.
+   */
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: VangrexNode) => {
+      setSelectedNode(node);
+    },
     [],
   );
 
-  const addNode = useCallback((type: NodeType) => {
-    const definition = nodeRegistry.get(type);
+  /*
+   * Add a node.
+   */
+  const addNode = useCallback(
+    (type: NodeType) => {
+      const definition = nodeRegistry.get(type);
 
-    const id = `node-${Date.now()}`;
+      const id = crypto.randomUUID();
 
-    const newNode: Node = {
-      id,
-      type: "vangrex",
-      position: {
+      const position = {
         x: 250,
         y: 150,
-      },
-      data: {
-        label: definition.name,
-        type: definition.type,
-        config: {},
-      },
-    };
+      };
 
-    setNodes((currentNodes) => [...currentNodes, newNode]);
+      /*
+       * This assumes the node definition exposes
+       * a valid defaultConfig.
+       */
+      const config = definition.defaultConfig;
 
-    setAddNodeOpen(false);
-    setSelectedNode(newNode);
-  }, []);
+      const newNode: VangrexNode = {
+        id,
+        type: "vangrex",
+        position,
+        data: {
+          label: definition.name,
+          type: definition.type,
+          config,
+        } as VangrexNodeData,
+      };
 
-  const updateNode = useCallback(
-    (nodeId: string, data: Record<string, unknown>) => {
+      setNodes((currentNodes) => [...currentNodes, newNode]);
+
+      createNode.mutate({
+        workflowId,
+        id,
+        position,
+        data: newNode.data,
+      });
+
+      setAddNodeOpen(false);
+      setSelectedNode(newNode);
+    },
+    [createNode, workflowId],
+  );
+
+  /*
+   * Update node data.
+   */
+  const updateNodeHandler = useCallback(
+    (nodeId: string, data: Partial<VangrexNodeData>) => {
       setNodes((currentNodes) =>
         currentNodes.map((node) =>
           node.id === nodeId
@@ -113,23 +258,47 @@ export const Canvas = ({ workflowId }: Props) => {
             }
           : currentNode,
       );
+
+      updateNode.mutate({
+        workflowId,
+        nodeId,
+        data,
+      });
     },
-    [],
+    [updateNode, workflowId],
   );
 
-  const deleteNode = useCallback((nodeId: string) => {
-    setNodes((currentNodes) =>
-      currentNodes.filter((node) => node.id !== nodeId),
-    );
+  /*
+   * Delete node.
+   */
+  const deleteNodeHandler = useCallback(
+    (nodeId: string) => {
+      setNodes((currentNodes) =>
+        currentNodes.filter((node) => node.id !== nodeId),
+      );
 
-    setEdges((currentEdges) =>
-      currentEdges.filter(
-        (edge) => edge.source !== nodeId && edge.target !== nodeId,
-      ),
-    );
+      setEdges((currentEdges) =>
+        currentEdges.filter(
+          (edge) => edge.source !== nodeId && edge.target !== nodeId,
+        ),
+      );
 
-    setSelectedNode(null);
-  }, []);
+      deleteNode.mutate({
+        workflowId,
+        nodeId,
+      });
+
+      setSelectedNode(null);
+    },
+    [deleteNode, workflowId],
+  );
+
+  const nodeTypes = useMemo(
+    () => ({
+      vangrex: CanvasNode,
+    }),
+    [],
+  );
 
   const defaultEdgeOptions = useMemo(
     () => ({
@@ -168,13 +337,16 @@ export const Canvas = ({ workflowId }: Props) => {
           </div>
         </div>
       )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
         onNodeClick={onNodeClick}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
@@ -208,13 +380,12 @@ export const Canvas = ({ workflowId }: Props) => {
       {selectedNode && (
         <NodeInspector
           node={selectedNode}
-          onUpdate={updateNode}
-          onDelete={deleteNode}
+          onUpdate={updateNodeHandler}
+          onDelete={deleteNodeHandler}
           onClose={() => setSelectedNode(null)}
         />
       )}
 
-      {/* Canvas actions */}
       <div className="absolute left-4 top-4 z-10">
         <Button
           onClick={() => setAddNodeOpen(true)}
@@ -231,18 +402,6 @@ export const Canvas = ({ workflowId }: Props) => {
         onOpenChange={setAddNodeOpen}
         onAddNode={addNode}
       />
-
-      {/* <NodeDialog
-        node={selectedNode}
-        open={Boolean(selectedNode)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedNode(null);
-          }
-        }}
-        onUpdate={updateNode}
-        onDelete={deleteNode}
-      /> */}
     </div>
   );
 };

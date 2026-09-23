@@ -12,3 +12,6 @@ const nodes = {
 export const nodeRegistry = createNodeRegistry(nodes);
 
 export type NodeType = keyof typeof nodes;
+
+export type NodeRegiistryMap = typeof nodes;
+

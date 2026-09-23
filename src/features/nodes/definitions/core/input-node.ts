@@ -15,11 +15,21 @@ export const inputNode = defineNode({
   outputs: [
     {
       id: "value",
-      name: "Value"
-    }
+      name: "Value",
+    },
   ],
 
-  config: z.object({}),
+  config: z.object({
+    value: z.string(),
+  }),
+
+  configFields: [
+    {
+      key: "value",
+      label: "Value",
+      type: "textarea"
+    }
+  ],
 
   input: z.object({
     value: z.unknown(),

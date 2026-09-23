@@ -3,6 +3,12 @@ import { z } from "zod";
 
 import { defineNode } from "../../define-node";
 
+const generateConfigSchema = z.object({
+  model: z.string(),
+  temperature: z.number(),
+  systemPrompt: z.string(),
+});
+
 export const generateNode = defineNode({
   type: "ai.generate",
 
@@ -19,17 +25,9 @@ export const generateNode = defineNode({
       id: "prompt",
       name: "Prompt",
     },
-    {
-      id: "model",
-      name: "Model",
-    },
   ],
 
-  config: z.object({
-    model: z.string(),
-    temperature: z.number(),
-    maxTokens: z.number(),
-  }),
+  config: generateConfigSchema,
 
   configFields: [
     {
