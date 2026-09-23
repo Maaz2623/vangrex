@@ -24,28 +24,16 @@ import { NodeDialog } from "@/features/nodes/components/node-dialog";
 import { nodeRegistry } from "@/features/nodes";
 import { toCanvasNode } from "@/features/nodes/utils/to-canvas-node";
 import { NodeType } from "@/features/nodes/registry";
+import { CanvasNode } from "@/features/nodes/components/canvas-node";
+import { NodeInspector } from "@/features/nodes/components/node-inspector";
 
 interface Props {
   workflowId: string;
 }
 
-const initialNodes: Node[] = [
-  toCanvasNode(nodeRegistry.get("core.input"), "n1", { x: 100, y: 150 }),
-  toCanvasNode(nodeRegistry.get("ai.generate"), "n2", { x: 400, y: 150 }),
-  toCanvasNode(nodeRegistry.get("core.output"), "n3", { x: 700, y: 150 }),
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: "n1-n2",
-    source: "n1",
-    target: "n2",
-  },
-];
-
 export const Canvas = ({ workflowId }: Props) => {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -66,6 +54,13 @@ export const Canvas = ({ workflowId }: Props) => {
     setSelectedNode(node);
   }, []);
 
+  const nodeTypes = useMemo(
+    () => ({
+      vangrex: CanvasNode,
+    }),
+    [],
+  );
+
   const addNode = useCallback((type: NodeType) => {
     const definition = nodeRegistry.get(type);
 
@@ -73,7 +68,7 @@ export const Canvas = ({ workflowId }: Props) => {
 
     const newNode: Node = {
       id,
-      type: "default",
+      type: "vangrex",
       position: {
         x: 250,
         y: 150,
@@ -81,6 +76,7 @@ export const Canvas = ({ workflowId }: Props) => {
       data: {
         label: definition.name,
         type: definition.type,
+        config: {},
       },
     };
 
@@ -155,6 +151,7 @@ export const Canvas = ({ workflowId }: Props) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
         fitViewOptions={{
@@ -169,7 +166,7 @@ export const Canvas = ({ workflowId }: Props) => {
         <Background
           gap={24}
           size={1}
-          color="color-mix(in oklch, var(--foreground) 8%, transparent)"
+          color="color-mix(in oklch, var(--foreground) 60%, transparent)"
         />
 
         <Controls
@@ -183,6 +180,15 @@ export const Canvas = ({ workflowId }: Props) => {
           className="!m-4 !overflow-hidden !rounded-lg !border !border-border !bg-background !shadow-sm"
         />
       </ReactFlow>
+
+      {selectedNode && (
+        <NodeInspector
+          node={selectedNode}
+          onUpdate={updateNode}
+          onDelete={deleteNode}
+          onClose={() => setSelectedNode(null)}
+        />
+      )}
 
       {/* Canvas actions */}
       <div className="absolute left-4 top-4 z-10">
@@ -202,7 +208,7 @@ export const Canvas = ({ workflowId }: Props) => {
         onAddNode={addNode}
       />
 
-      <NodeDialog
+      {/* <NodeDialog
         node={selectedNode}
         open={Boolean(selectedNode)}
         onOpenChange={(open) => {
@@ -212,7 +218,7 @@ export const Canvas = ({ workflowId }: Props) => {
         }}
         onUpdate={updateNode}
         onDelete={deleteNode}
-      />
+      /> */}
     </div>
   );
 };

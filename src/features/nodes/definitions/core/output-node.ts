@@ -10,6 +10,17 @@ export const outputNode = defineNode({
   category: "core",
   icon: ArrowUp,
 
+  inputs: [
+    {
+      id: "value",
+      name: "Value",
+    },
+  ],
+
+  outputs: [],
+
+  config: z.object({}),
+
   input: z.object({
     value: z.unknown(),
   }),

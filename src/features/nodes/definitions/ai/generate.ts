@@ -5,10 +5,61 @@ import { defineNode } from "../../define-node";
 
 export const generateNode = defineNode({
   type: "ai.generate",
+
   name: "Generate",
+
   description: "Generates text using an AI model.",
+
   category: "ai",
+
   icon: Sparkles,
+
+  inputs: [
+    {
+      id: "prompt",
+      name: "Prompt",
+    },
+    {
+      id: "model",
+      name: "Model",
+    },
+  ],
+
+  config: z.object({
+    model: z.string(),
+    temperature: z.number(),
+    maxTokens: z.number(),
+  }),
+
+  configFields: [
+    {
+      key: "model",
+      label: "Model",
+      type: "select",
+      options: [
+        { label: "GPT-5.6", value: "gpt-5.6" },
+        { label: "GPT-5.6 Mini", value: "gpt-5.6-mini" },
+      ],
+    },
+    {
+      key: "temperature",
+      label: "Temperature",
+      type: "number",
+      description: "Controls randomness of generated output.",
+    },
+    {
+      key: "maxTokens",
+      label: "Max tokens",
+      type: "number",
+    },
+  ],
+
+  outputs: [
+    {
+      id: "message",
+      name: "Message",
+    },
+  ],
 
   input: z.object({
     prompt: z.string(),
