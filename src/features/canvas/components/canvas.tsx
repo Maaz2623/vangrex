@@ -24,7 +24,6 @@ import { Check, GitBranch, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { AddNodeDialog } from "@/features/nodes/components/add-node-dialog";
-import { NodeInspector } from "@/features/nodes/components/node-inspector";
 import { CanvasNode } from "@/features/nodes/components/canvas-node";
 
 import { nodeRegistry } from "@/features/nodes";
@@ -46,6 +45,7 @@ import {
   useDeleteEdge,
   useEdges,
 } from "@/features/edges/hooks/use-edges";
+import { NodeInspector } from "@/features/nodes/components/node-inspector/node-inspector";
 
 interface Props {
   workflowId: string;
@@ -622,23 +622,13 @@ export const Canvas = ({ workflowId }: Props) => {
         {selectedNode && (
           <motion.div
             key={selectedNode.id}
-            initial={{
-              opacity: 0,
-              x: 20,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
-            }}
-            exit={{
-              opacity: 0,
-              x: 20,
-            }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
             transition={{
-              duration: 0.22,
+              duration: 0.2,
               ease: "easeOut",
             }}
-            className="absolute right-4 top-16 z-20"
           >
             <NodeInspector
               node={selectedNode}
