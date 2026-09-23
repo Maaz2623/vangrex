@@ -68,8 +68,10 @@ export function AppSidebarMobile({
 
   const workflowId = params.workflowId;
 
+  const pathname = usePathname()
+
   const isWorkflowPage = Boolean(
-    workflowId && usePathname().startsWith("/dashboard/workflows/"),
+    workflowId && pathname.startsWith("/dashboard/workflows/"),
   );
 
   const workspaceNav: NavItem[] = [
