@@ -68,7 +68,7 @@ export const nodesRouter = createTRPCRouter({
       z.object({
         workflowId: z.string(),
 
-        id: z.string().uuid(),
+        id: z.uuid(),
 
         position: nodePositionSchema,
 

@@ -9,6 +9,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  OnNodeDrag,
   ReactFlow,
   type Connection,
   type Edge,
@@ -115,8 +116,8 @@ export const Canvas = ({ workflowId }: Props) => {
   /*
    * Persist node position after dragging.
    */
-  const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, node: VangrexNode) => {
+  const onNodeDragStop: OnNodeDrag<VangrexNode> = useCallback(
+    (_event, node) => {
       updateNode.mutate({
         workflowId,
         nodeId: node.id,
@@ -175,7 +176,7 @@ export const Canvas = ({ workflowId }: Props) => {
   /*
    * Select node.
    */
-  const onNodeClick = useCallback(
+  const onNodeDoubleClick = useCallback(
     (_event: React.MouseEvent, node: VangrexNode) => {
       setSelectedNode(node);
     },
@@ -345,7 +346,7 @@ export const Canvas = ({ workflowId }: Props) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
-        onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}

@@ -1,9 +1,9 @@
-import { Handle, Node, Position } from "@xyflow/react";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 
 import { nodeRegistry } from "../registry";
-import { VangrexNodeData } from "../types/node-data";
+import { VangrexNode, VangrexNodeData } from "../types/node-data";
 
-export const CanvasNode = ({ data, selected }: Node<VangrexNodeData>) => {
+export const CanvasNode = ({ data, selected }: NodeProps<VangrexNode>) => {
   const definition = nodeRegistry.get(data.type);
 
   const Icon = definition.icon;

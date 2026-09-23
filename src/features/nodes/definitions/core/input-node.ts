@@ -20,15 +20,15 @@ export const inputNode = defineNode({
   ],
 
   config: z.object({
-    value: z.string(),
+    value: z.string().nullable(),
   }),
 
   configFields: [
     {
       key: "value",
       label: "Value",
-      type: "textarea"
-    }
+      type: "textarea",
+    },
   ],
 
   input: z.object({
@@ -38,6 +38,10 @@ export const inputNode = defineNode({
   output: z.object({
     value: z.unknown(),
   }),
+
+  defaultConfig: {
+    value: "null",
+  },
 
   execute: async ({ input }) => {
     return input;

@@ -25,6 +25,9 @@ export const useCreateNode = () => {
           }),
         );
       },
+      onError: (error) => {
+        console.log(error);
+      },
     }),
   );
 };

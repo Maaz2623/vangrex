@@ -67,6 +67,12 @@ export const generateNode = defineNode({
     text: z.string(),
   }),
 
+  defaultConfig: {
+    model: "gpt-5.6",
+    temperature: 0.7,
+    systemPrompt: "You are an assistant",
+  },
+
   execute: async ({ input }) => {
     return {
       text: input.prompt,
