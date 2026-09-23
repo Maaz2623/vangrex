@@ -21,27 +21,18 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AddNodeDialog } from "@/features/nodes/components/add-node-dialog";
 import { NodeDialog } from "@/features/nodes/components/node-dialog";
-
+import { nodeRegistry } from "@/features/nodes";
+import { toCanvasNode } from "@/features/nodes/utils/to-canvas-node";
+import { NodeType } from "@/features/nodes/registry";
 
 interface Props {
   workflowId: string;
 }
 
 const initialNodes: Node[] = [
-  {
-    id: "n1",
-    position: { x: 80, y: 80 },
-    data: {
-      label: "Node 1",
-    },
-  },
-  {
-    id: "n2",
-    position: { x: 80, y: 220 },
-    data: {
-      label: "Node 2",
-    },
-  },
+  toCanvasNode(nodeRegistry.get("core.input"), "n1", { x: 100, y: 150 }),
+  toCanvasNode(nodeRegistry.get("ai.generate"), "n2", { x: 400, y: 150 }),
+  toCanvasNode(nodeRegistry.get("core.output"), "n3", { x: 700, y: 150 }),
 ];
 
 const initialEdges: Edge[] = [
@@ -75,18 +66,21 @@ export const Canvas = ({ workflowId }: Props) => {
     setSelectedNode(node);
   }, []);
 
-  const addNode = useCallback((type: string, label: string) => {
+  const addNode = useCallback((type: NodeType) => {
+    const definition = nodeRegistry.get(type);
+
     const id = `node-${Date.now()}`;
 
     const newNode: Node = {
       id,
+      type: "default",
       position: {
         x: 250,
         y: 150,
       },
       data: {
-        label,
-        type,
+        label: definition.name,
+        type: definition.type,
       },
     };
 

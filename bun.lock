@@ -12,7 +12,7 @@
         "@trpc/client": "^11.19.0",
         "@trpc/server": "^11.19.0",
         "@trpc/tanstack-react-query": "^11.19.0",
-        "@vangrex/node-sdk": "0.2.0",
+        "@vangrex/node-sdk": "0.2.3",
         "@xyflow/react": "^12.11.6",
         "better-auth": "^1.7.5",
         "class-variance-authority": "^0.7.1",
@@ -548,7 +548,7 @@
 
     "@types/validate-npm-package-name": ["@types/validate-npm-package-name@4.0.2", "", {}, "sha512-lrpDziQipxCEeK5kWxvljWYhUvOiB2A9izZd9B2AFarYAkqZshb4lPbRs7zKEic6eGtH8V/2qJW+dPp9OtF6bw=="],
 
-    "@vangrex/node-sdk": ["@vangrex/node-sdk@0.2.0", "", { "dependencies": { "zod": "^3.0.0" } }, "sha512-91+fmMDK/WMNi/mtk5CQ+wYi9v7B/wTZjvgCcLW0QeT58sHZPKbOATTXVU2hu2VdOHChtBkXdEX96VI+hu/brQ=="],
+    "@vangrex/node-sdk": ["@vangrex/node-sdk@0.2.3", "", { "dependencies": { "zod": "^4.6.5" } }, "sha512-Mho3MD7Z5nw0C3JazpxDPCQ0BY0kEjhMib6Qu9FjMMMO8YuOJQegOMBfZ+QLKPHrkTVxx5OsqMHWz+KOv820lQ=="],
 
     "@xyflow/react": ["@xyflow/react@12.11.6", "", { "dependencies": { "@xyflow/system": "0.0.82", "classcat": "^5.0.3", "zustand": "^4.4.0" }, "peerDependencies": { "@types/react": ">=17", "@types/react-dom": ">=17", "react": ">=17", "react-dom": ">=17" }, "optionalPeers": ["@types/react", "@types/react-dom"] }, "sha512-9XsEJNHjatKYndszKTF/bsU7FOP9dJ6V/EQwzy3oMdtqgBuUq7BjKSwkEo+C7s4qHstHQfwwoHA3E8QfpPxZZQ=="],
 
@@ -1273,8 +1273,6 @@
     "@tailwindcss/oxide-wasm32-wasi/@tybys/wasm-util": ["@tybys/wasm-util@0.10.4", "", { "dependencies": { "tslib": "^2.4.0" }, "bundled": true }, "sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A=="],
 
     "@tailwindcss/oxide-wasm32-wasi/tslib": ["tslib@2.8.1", "", { "bundled": true }, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
-
-    "@vangrex/node-sdk/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "better-call/@better-auth/utils": ["@better-auth/utils@0.5.0", "", { "dependencies": { "@noble/hashes": "^2.0.1" } }, "sha512-BL8W4EfIZFwlu0r54m3v1ztjDhu6dDe/amLTm0xybmbZaNgYUqhD3SjpAsnq0q8YD6/ki4iwIgxJNLP/N3TxiA=="],
 
