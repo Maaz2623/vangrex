@@ -361,7 +361,7 @@ export const Canvas = ({ workflowId }: Props) => {
   const hasNodes = nodes.length > 0;
 
   return (
-    <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl border bg-background">
+    <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl bg-background">
       {/*
        * Canvas
        */}
