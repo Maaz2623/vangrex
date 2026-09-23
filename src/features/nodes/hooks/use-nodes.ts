@@ -62,6 +62,9 @@ export const useDeleteNode = () => {
           }),
         );
       },
+      onError: (error) => {
+        console.log(error);
+      },
     }),
   );
 };
