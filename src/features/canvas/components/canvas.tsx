@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   addEdge,
@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, WineOff } from "lucide-react";
 import { AddNodeDialog } from "@/features/nodes/components/add-node-dialog";
 import { NodeDialog } from "@/features/nodes/components/node-dialog";
 import { nodeRegistry } from "@/features/nodes";
@@ -189,7 +189,7 @@ export const Canvas = ({ workflowId }: Props) => {
         <Button
           onClick={() => setAddNodeOpen(true)}
           size="sm"
-          className="shadow-sm"
+          variant="outline"
         >
           <Plus className="size-4" />
           Add node

@@ -13,11 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 
 import { nodeRegistry } from "@/features/nodes";
+import { NodeType } from "../registry";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddNode: (type: string) => void;
+  onAddNode: (type: NodeType) => void;
 }
 
 export function AddNodeDialog({ open, onOpenChange, onAddNode }: Props) {
@@ -48,7 +49,7 @@ export function AddNodeDialog({ open, onOpenChange, onAddNode }: Props) {
     }
   };
 
-  const handleAddNode = (type: string) => {
+  const handleAddNode = (type: NodeType) => {
     onAddNode(type);
     setSearch("");
   };
@@ -85,7 +86,7 @@ export function AddNodeDialog({ open, onOpenChange, onAddNode }: Props) {
           </div>
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto p-3">
+        <div className="max-h-105 overflow-y-auto p-3">
           {filteredNodes.length > 0 ? (
             <div className="grid gap-1 sm:grid-cols-2">
               {filteredNodes.map((node) => {
@@ -95,7 +96,7 @@ export function AddNodeDialog({ open, onOpenChange, onAddNode }: Props) {
                   <button
                     key={node.type}
                     type="button"
-                    onClick={() => handleAddNode(node.type)}
+                    onClick={() => handleAddNode(node.type as NodeType)}
                     className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-muted"
                   >
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors group-hover:text-foreground">
