@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
-import { Plus, WineOff } from "lucide-react";
+import { GitBranch, Plus, WineOff } from "lucide-react";
 import { AddNodeDialog } from "@/features/nodes/components/add-node-dialog";
 import { NodeDialog } from "@/features/nodes/components/node-dialog";
 import { nodeRegistry } from "@/features/nodes";
@@ -144,6 +144,30 @@ export const Canvas = ({ workflowId }: Props) => {
 
   return (
     <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl bg-background">
+      {nodes.length === 0 && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="pointer-events-auto flex max-w-sm flex-col items-center text-center">
+            <div className="mb-4 flex size-12 items-center justify-center rounded-xl border bg-muted/40">
+              <GitBranch className="size-5 text-muted-foreground" />
+            </div>
+
+            <h3 className="text-sm font-medium">No nodes added yet</h3>
+
+            <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+              Add your first node to start building this workflow.
+            </p>
+
+            <Button
+              type="button"
+              size="sm"
+              className="mt-4"
+              onClick={() => setAddNodeOpen(true)}
+            >
+              Add node
+            </Button>
+          </div>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
