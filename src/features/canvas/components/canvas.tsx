@@ -17,7 +17,9 @@ import {
   type OnNodesChange,
 } from "@xyflow/react";
 
-import { GitBranch, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+
+import { Check, GitBranch, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -28,7 +30,10 @@ import { CanvasNode } from "@/features/nodes/components/canvas-node";
 import { nodeRegistry } from "@/features/nodes";
 import { NodeType } from "@/features/nodes/registry";
 
-import { VangrexNode, VangrexNodeData } from "@/features/nodes/types/node-data";
+import {
+  VangrexNode,
+  VangrexNodeData,
+} from "@/features/nodes/types/node-data";
 
 import { toCanvasNode } from "@/features/nodes/utils/to-canvas-node";
 
@@ -52,12 +57,15 @@ interface Props {
 export const Canvas = ({ workflowId }: Props) => {
   const [nodes, setNodes] = useState<VangrexNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-
   const [addNodeOpen, setAddNodeOpen] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<VangrexNode | null>(null);
+  const [selectedNode, setSelectedNode] =
+    useState<VangrexNode | null>(null);
 
-  const { data: savedNodes } = useNodes(workflowId);
-  const { data: savedEdges } = useEdges(workflowId);
+  const { data: savedNodes, isLoading: nodesLoading } =
+    useNodes(workflowId);
+
+  const { data: savedEdges, isLoading: edgesLoading } =
+    useEdges(workflowId);
 
   const createNode = useCreateNode();
   const updateNode = useUpdateNode();
@@ -65,6 +73,15 @@ export const Canvas = ({ workflowId }: Props) => {
 
   const createEdge = useCreateEdge();
   const deleteEdge = useDeleteEdge();
+
+  const isLoading = nodesLoading || edgesLoading;
+
+  const isSaving =
+    createNode.isPending ||
+    updateNode.isPending ||
+    deleteNode.isPending ||
+    createEdge.isPending ||
+    deleteEdge.isPending;
 
   /*
    * Hydrate nodes from the database.
@@ -74,7 +91,9 @@ export const Canvas = ({ workflowId }: Props) => {
 
     const canvasNodes = savedNodes
       .map((node) => toCanvasNode(node))
-      .filter((node): node is VangrexNode => node !== null);
+      .filter(
+        (node): node is VangrexNode => node !== null,
+      );
 
     setNodes(canvasNodes);
   }, [savedNodes]);
@@ -102,16 +121,26 @@ export const Canvas = ({ workflowId }: Props) => {
    * Position persistence happens in onNodeDragStop,
    * not on every node change.
    */
-  const onNodesChange: OnNodesChange<VangrexNode> = useCallback((changes) => {
-    setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
-  }, []);
+  const onNodesChange: OnNodesChange<VangrexNode> = useCallback(
+    (changes) => {
+      setNodes((currentNodes) =>
+        applyNodeChanges(changes, currentNodes),
+      );
+    },
+    [],
+  );
 
   /*
    * React Flow edge changes.
    */
-  const onEdgesChange: OnEdgesChange = useCallback((changes) => {
-    setEdges((currentEdges) => applyEdgeChanges(changes, currentEdges));
-  }, []);
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => {
+      setEdges((currentEdges) =>
+        applyEdgeChanges(changes, currentEdges),
+      );
+    },
+    [],
+  );
 
   /*
    * Persist node position after dragging.
@@ -128,6 +157,16 @@ export const Canvas = ({ workflowId }: Props) => {
   );
 
   /*
+   * Open the inspector only on double click.
+   */
+  const onNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: VangrexNode) => {
+      setSelectedNode(node);
+    },
+    [],
+  );
+
+  /*
    * Create a persisted edge.
    */
   const onConnect = useCallback(
@@ -138,11 +177,15 @@ export const Canvas = ({ workflowId }: Props) => {
         id,
         source: connection.source,
         target: connection.target,
-        sourceHandle: connection.sourceHandle ?? undefined,
-        targetHandle: connection.targetHandle ?? undefined,
+        sourceHandle:
+          connection.sourceHandle ?? undefined,
+        targetHandle:
+          connection.targetHandle ?? undefined,
       };
 
-      setEdges((currentEdges) => addEdge(edge, currentEdges));
+      setEdges((currentEdges) =>
+        addEdge(edge, currentEdges),
+      );
 
       createEdge.mutate({
         workflowId,
@@ -150,8 +193,10 @@ export const Canvas = ({ workflowId }: Props) => {
           id,
           sourceNodeId: connection.source,
           targetNodeId: connection.target,
-          sourceHandle: connection.sourceHandle ?? null,
-          targetHandle: connection.targetHandle ?? null,
+          sourceHandle:
+            connection.sourceHandle ?? null,
+          targetHandle:
+            connection.targetHandle ?? null,
         },
       });
     },
@@ -174,16 +219,6 @@ export const Canvas = ({ workflowId }: Props) => {
   );
 
   /*
-   * Select node.
-   */
-  const onNodeDoubleClick = useCallback(
-    (_event: React.MouseEvent, node: VangrexNode) => {
-      setSelectedNode(node);
-    },
-    [],
-  );
-
-  /*
    * Add a node.
    */
   const addNode = useCallback(
@@ -197,10 +232,6 @@ export const Canvas = ({ workflowId }: Props) => {
         y: 150,
       };
 
-      /*
-       * This assumes the node definition exposes
-       * a valid defaultConfig.
-       */
       const config = definition.defaultConfig;
 
       const newNode: VangrexNode = {
@@ -214,7 +245,10 @@ export const Canvas = ({ workflowId }: Props) => {
         } as VangrexNodeData,
       };
 
-      setNodes((currentNodes) => [...currentNodes, newNode]);
+      setNodes((currentNodes) => [
+        ...currentNodes,
+        newNode,
+      ]);
 
       createNode.mutate({
         workflowId,
@@ -224,7 +258,11 @@ export const Canvas = ({ workflowId }: Props) => {
       });
 
       setAddNodeOpen(false);
-      setSelectedNode(newNode);
+
+      /*
+       * Do not open the inspector here.
+       * Inspector opens only on double click.
+       */
     },
     [createNode, workflowId],
   );
@@ -233,7 +271,10 @@ export const Canvas = ({ workflowId }: Props) => {
    * Update node data.
    */
   const updateNodeHandler = useCallback(
-    (nodeId: string, data: Partial<VangrexNodeData>) => {
+    (
+      nodeId: string,
+      data: Partial<VangrexNodeData>,
+    ) => {
       setNodes((currentNodes) =>
         currentNodes.map((node) =>
           node.id === nodeId
@@ -275,12 +316,16 @@ export const Canvas = ({ workflowId }: Props) => {
   const deleteNodeHandler = useCallback(
     (nodeId: string) => {
       setNodes((currentNodes) =>
-        currentNodes.filter((node) => node.id !== nodeId),
+        currentNodes.filter(
+          (node) => node.id !== nodeId,
+        ),
       );
 
       setEdges((currentEdges) =>
         currentEdges.filter(
-          (edge) => edge.source !== nodeId && edge.target !== nodeId,
+          (edge) =>
+            edge.source !== nodeId &&
+            edge.target !== nodeId,
         ),
       );
 
@@ -305,99 +350,322 @@ export const Canvas = ({ workflowId }: Props) => {
     () => ({
       animated: false,
       style: {
-        stroke: "color-mix(in oklch, var(--muted-foreground) 45%, transparent)",
+        stroke:
+          "color-mix(in oklch, var(--muted-foreground) 45%, transparent)",
         strokeWidth: 1.5,
       },
     }),
     [],
   );
 
+  const hasNodes = nodes.length > 0;
+
   return (
-    <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl bg-background">
-      {nodes.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="pointer-events-auto flex max-w-sm flex-col items-center text-center">
-            <div className="mb-4 flex size-12 items-center justify-center rounded-xl border bg-muted/40">
-              <GitBranch className="size-5 text-muted-foreground" />
-            </div>
-
-            <h3 className="text-sm font-medium">No nodes added yet</h3>
-
-            <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
-              Add your first node to start building this workflow.
-            </p>
-
-            <Button
-              type="button"
-              size="sm"
-              className="mt-4"
-              onClick={() => setAddNodeOpen(true)}
-            >
-              Add node
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onEdgesDelete={onEdgesDelete}
-        onNodeDoubleClick={onNodeDoubleClick}
-        onNodeDragStop={onNodeDragStop}
-        nodeTypes={nodeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
-        fitView
-        fitViewOptions={{
-          padding: 0.2,
+    <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl border bg-background">
+      {/*
+       * Canvas
+       */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isLoading ? 0.35 : 1 }}
+        transition={{
+          duration: 0.25,
+          ease: "easeOut",
         }}
-        colorMode="light"
-        className="bg-background"
-        proOptions={{
-          hideAttribution: true,
-        }}
+        className="absolute inset-0"
       >
-        <Background
-          gap={24}
-          size={1}
-          color="color-mix(in oklch, var(--foreground) 60%, transparent)"
-        />
-
-        <Controls
-          showInteractive={false}
-          className="!m-4 !overflow-hidden !rounded-lg !border !border-border !bg-background !shadow-sm"
-        />
-
-        <MiniMap
-          nodeColor="color-mix(in oklch, var(--foreground) 20%, var(--background))"
-          maskColor="color-mix(in oklch, var(--background) 80%, transparent)"
-          className="!m-4 !overflow-hidden !rounded-lg !border !border-border !bg-background !shadow-sm"
-        />
-      </ReactFlow>
-
-      {selectedNode && (
-        <NodeInspector
-          node={selectedNode}
-          onUpdate={updateNodeHandler}
-          onDelete={deleteNodeHandler}
-          onClose={() => setSelectedNode(null)}
-        />
-      )}
-
-      <div className="absolute left-4 top-4 z-10">
-        <Button
-          onClick={() => setAddNodeOpen(true)}
-          size="sm"
-          variant="outline"
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onEdgesDelete={onEdgesDelete}
+          onNodeDoubleClick={onNodeDoubleClick}
+          onNodeDragStop={onNodeDragStop}
+          nodeTypes={nodeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
+          fitView
+          fitViewOptions={{
+            padding: 0.2,
+          }}
+          colorMode="light"
+          className="bg-background"
+          proOptions={{
+            hideAttribution: true,
+          }}
         >
-          <Plus className="size-4" />
-          Add node
-        </Button>
-      </div>
+          <Background
+            gap={24}
+            size={1}
+            color="color-mix(in oklch, var(--foreground) 60%, transparent)"
+          />
 
+          <Controls
+            showInteractive={false}
+            className="!m-4 !overflow-hidden !rounded-lg !border !border-border !bg-background !shadow-sm"
+          />
+
+          <MiniMap
+            nodeColor="color-mix(in oklch, var(--foreground) 20%, var(--background))"
+            maskColor="color-mix(in oklch, var(--background) 80%, transparent)"
+            className="!m-4 !overflow-hidden !rounded-lg !border !border-border !bg-background !shadow-sm"
+          />
+        </ReactFlow>
+      </motion.div>
+
+      {/*
+       * Loading state
+       */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: 0.2,
+            }}
+            className="absolute inset-0 z-20 bg-background/70 backdrop-blur-[1px]"
+          >
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-[min(520px,calc(100%-3rem))]">
+                <div className="mb-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>Loading workflow...</span>
+                </div>
+
+                <div className="relative mx-auto w-full max-w-[320px]">
+                  <div className="absolute -left-20 top-20 hidden h-px w-20 bg-border sm:block" />
+
+                  <div className="absolute -right-20 top-20 hidden h-px w-20 bg-border sm:block" />
+
+                  <CanvasSkeleton />
+
+                  <div className="mt-10 flex justify-center">
+                    <div className="h-2 w-24 animate-pulse rounded-full bg-muted" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/*
+       * Empty state
+       */}
+      <AnimatePresence>
+        {!isLoading && !hasNodes && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 8,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -8,
+            }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+          >
+            <div className="pointer-events-auto flex max-w-sm flex-col items-center px-6 text-center">
+              <motion.div
+                initial={{
+                  scale: 0.9,
+                  opacity: 0,
+                }}
+                animate={{
+                  scale: 1,
+                  opacity: 1,
+                }}
+                transition={{
+                  delay: 0.05,
+                  duration: 0.25,
+                }}
+                className="mb-4 flex size-12 items-center justify-center rounded-xl border bg-muted/40"
+              >
+                <GitBranch className="size-5 text-muted-foreground" />
+              </motion.div>
+
+              <h3 className="text-sm font-medium">
+                No nodes added yet
+              </h3>
+
+              <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+                Add your first node to start building this
+                workflow.
+              </p>
+
+              <motion.div
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className="mt-4"
+              >
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setAddNodeOpen(true)}
+                  disabled={createNode.isPending}
+                >
+                  {createNode.isPending ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="size-3.5" />
+                      Add node
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/*
+       * Save status
+       */}
+      <AnimatePresence mode="wait">
+        {isSaving ? (
+          <motion.div
+            key="saving"
+            initial={{
+              opacity: 0,
+              y: -4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -4,
+            }}
+            transition={{
+              duration: 0.18,
+            }}
+            className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-md border bg-background/95 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur"
+          >
+            <Loader2 className="size-3 animate-spin" />
+            Saving
+          </motion.div>
+        ) : (
+          <motion.div
+            key="saved"
+            initial={{
+              opacity: 0,
+              y: -4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              opacity: 0,
+              y: -4,
+            }}
+            transition={{
+              duration: 0.18,
+            }}
+            className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-md border bg-background/95 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur"
+          >
+            <Check className="size-3" />
+            Saved
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/*
+       * Add node button
+       */}
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: -4,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          delay: 0.1,
+          duration: 0.25,
+        }}
+        className="absolute left-4 top-4 z-10"
+      >
+        <motion.div
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Button
+            onClick={() => setAddNodeOpen(true)}
+            size="sm"
+            variant="outline"
+            disabled={isLoading || createNode.isPending}
+            className="bg-background/95 shadow-sm backdrop-blur"
+          >
+            {createNode.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Plus className="size-3.5" />
+            )}
+
+            {createNode.isPending
+              ? "Adding..."
+              : "Add node"}
+          </Button>
+        </motion.div>
+      </motion.div>
+
+      {/*
+       * Node inspector
+       */}
+      <AnimatePresence>
+        {selectedNode && (
+          <motion.div
+            key={selectedNode.id}
+            initial={{
+              opacity: 0,
+              x: 20,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            exit={{
+              opacity: 0,
+              x: 20,
+            }}
+            transition={{
+              duration: 0.22,
+              ease: "easeOut",
+            }}
+            className="absolute right-4 top-16 z-20"
+          >
+            <NodeInspector
+              node={selectedNode}
+              onUpdate={updateNodeHandler}
+              onDelete={deleteNodeHandler}
+              onClose={() => setSelectedNode(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/*
+       * Add node dialog
+       */}
       <AddNodeDialog
         open={addNodeOpen}
         onOpenChange={setAddNodeOpen}
@@ -406,3 +674,43 @@ export const Canvas = ({ workflowId }: Props) => {
     </div>
   );
 };
+
+function CanvasSkeleton() {
+  return (
+    <motion.div
+      initial={{
+        opacity: 0,
+        scale: 0.98,
+      }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+      }}
+      transition={{
+        duration: 0.25,
+      }}
+      className="relative overflow-hidden rounded-xl border bg-background shadow-sm"
+    >
+      <div className="flex items-center gap-3 px-3.5 py-3">
+        <div className="size-8 shrink-0 animate-pulse rounded-lg bg-muted" />
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-3.5 w-28 animate-pulse rounded bg-muted" />
+          <div className="h-2.5 w-16 animate-pulse rounded bg-muted/70" />
+        </div>
+      </div>
+
+      <div className="border-t px-3.5 py-3">
+        <div className="flex items-center justify-between">
+          <div className="h-2.5 w-14 animate-pulse rounded bg-muted" />
+          <div className="size-2 animate-pulse rounded-full bg-muted" />
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
+          <div className="size-2 animate-pulse rounded-full bg-muted" />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
