@@ -421,7 +421,7 @@ export const Canvas = ({ workflowId }: Props) => {
             transition={{
               duration: 0.2,
             }}
-            className="absolute inset-0 z-20 bg-background/70 backdrop-blur-[1px]"
+            className="absolute inset-0 z-20 bg-background/70 "
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-[min(520px,calc(100%-3rem))]">
