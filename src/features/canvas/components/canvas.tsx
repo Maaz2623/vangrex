@@ -11,6 +11,7 @@ import {
   MiniMap,
   OnNodeDrag,
   ReactFlow,
+  useReactFlow,
   type Connection,
   type Edge,
   type OnEdgesChange,
@@ -206,19 +207,20 @@ export const Canvas = ({ workflowId }: Props) => {
     [deleteEdge, workflowId],
   );
 
+  const { screenToFlowPosition } = useReactFlow();
+
   /*
    * Add a node.
    */
   const addNode = useCallback(
     (type: NodeType) => {
       const definition = nodeRegistry.get(type);
-
       const id = crypto.randomUUID();
 
-      const position = {
-        x: 250,
-        y: 150,
-      };
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
 
       const config = definition.defaultConfig;
 
@@ -243,13 +245,8 @@ export const Canvas = ({ workflowId }: Props) => {
       });
 
       setAddNodeOpen(false);
-
-      /*
-       * Do not open the inspector here.
-       * Inspector opens only on double click.
-       */
     },
-    [createNode, workflowId],
+    [createNode, workflowId, screenToFlowPosition],
   );
 
   /*

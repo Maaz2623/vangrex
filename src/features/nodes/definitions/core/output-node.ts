@@ -19,7 +19,21 @@ export const outputNode = defineNode({
 
   outputs: [],
 
-  config: z.object({}),
+  config: z.object({
+    value: z.string(),
+  }),
+
+  defaultConfig: {
+    value: "no value",
+  },
+
+  configFields: [
+    {
+      label: "Value",
+      key: "value",
+      type: "text",
+    },
+  ],
 
   input: z.object({
     value: z.unknown(),
