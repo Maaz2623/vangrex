@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   addEdge,
@@ -255,6 +255,11 @@ export const Canvas = ({ workflowId }: Props) => {
   /*
    * Update node data.
    */
+
+  const saveTimeoutsRef = useRef(
+    new Map<string, ReturnType<typeof setTimeout>>(),
+  );
+
   const updateNodeHandler = useCallback(
     (nodeId: string, data: Partial<VangrexNodeData>) => {
       setNodes((currentNodes) =>
@@ -283,11 +288,23 @@ export const Canvas = ({ workflowId }: Props) => {
           : currentNode,
       );
 
-      updateNode.mutate({
-        workflowId,
-        nodeId,
-        data,
-      });
+      const existingTimeout = saveTimeoutsRef.current.get(nodeId);
+
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      const timeout = setTimeout(() => {
+        updateNode.mutate({
+          workflowId,
+          nodeId,
+          data,
+        });
+
+        saveTimeoutsRef.current.delete(nodeId);
+      }, 500);
+
+      saveTimeoutsRef.current.set(nodeId, timeout);
     },
     [updateNode, workflowId],
   );
