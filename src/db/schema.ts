@@ -9,76 +9,6 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 
-export const workflowEdges = pgTable("workflow_edges", {
-  id: uuid("id").defaultRandom().primaryKey(),
-
-  workflowId: uuid("workflow_id")
-    .notNull()
-    .references(() => workflowsTable.id, {
-      onDelete: "cascade",
-    }),
-
-  sourceNodeId: uuid("source_node_id")
-    .notNull()
-    .references(() => workflowNodes.id, {
-      onDelete: "cascade",
-    }),
-
-  targetNodeId: uuid("target_node_id")
-    .notNull()
-    .references(() => workflowNodes.id, {
-      onDelete: "cascade",
-    }),
-
-  sourceHandle: text("source_handle"),
-
-  targetHandle: text("target_handle"),
-
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  })
-    .defaultNow()
-    .notNull(),
-});
-
-export const workflowNodes = pgTable("workflow_nodes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-
-  workflowId: uuid("workflow_id")
-    .notNull()
-    .references(() => workflowsTable.id, {
-      onDelete: "cascade",
-    }),
-
-  type: text("type").notNull(),
-
-  label: text("label").notNull(),
-
-  position: jsonb("position")
-    .$type<{
-      x: number;
-      y: number;
-    }>()
-    .notNull(),
-
-  config: jsonb("config")
-    .$type<Record<string, unknown>>()
-    .notNull()
-    .default({}),
-
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-  })
-    .defaultNow()
-    .notNull(),
-
-  updatedAt: timestamp("updated_at", {
-    withTimezone: true,
-  })
-    .defaultNow()
-    .notNull(),
-});
-
 export const workflowsTable = pgTable(
   "workflows",
   {
@@ -184,8 +114,6 @@ export const relations = defineRelations(
     verification,
     session,
     workflowsTable,
-    workflowNodes,
-    workflowEdges,
   },
   (r) => ({
     user: {
@@ -225,54 +153,6 @@ export const relations = defineRelations(
       user: r.one.user({
         from: r.workflowsTable.userId,
         to: r.user.id,
-        optional: false,
-      }),
-
-      nodes: r.many.workflowNodes({
-        from: r.workflowsTable.id,
-        to: r.workflowNodes.workflowId,
-      }),
-
-      edges: r.many.workflowEdges({
-        from: r.workflowsTable.id,
-        to: r.workflowEdges.workflowId,
-      }),
-    },
-
-    workflowNodes: {
-      workflow: r.one.workflowsTable({
-        from: r.workflowNodes.workflowId,
-        to: r.workflowsTable.id,
-        optional: false,
-      }),
-
-      outgoingEdges: r.many.workflowEdges({
-        from: r.workflowNodes.id,
-        to: r.workflowEdges.sourceNodeId,
-      }),
-
-      incomingEdges: r.many.workflowEdges({
-        from: r.workflowNodes.id,
-        to: r.workflowEdges.targetNodeId,
-      }),
-    },
-
-    workflowEdges: {
-      workflow: r.one.workflowsTable({
-        from: r.workflowEdges.workflowId,
-        to: r.workflowsTable.id,
-        optional: false,
-      }),
-
-      sourceNode: r.one.workflowNodes({
-        from: r.workflowEdges.sourceNodeId,
-        to: r.workflowNodes.id,
-        optional: false,
-      }),
-
-      targetNode: r.one.workflowNodes({
-        from: r.workflowEdges.targetNodeId,
-        to: r.workflowNodes.id,
         optional: false,
       }),
     },
