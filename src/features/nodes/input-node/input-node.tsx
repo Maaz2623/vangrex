@@ -2,7 +2,7 @@ import { ArrowDown } from "lucide-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { InputNode } from "./input-node.types";
 
-export const InputNodeUI = ({ data, id }: NodeProps<InputNode >) => {
+export const InputNodeUI = ({ data, id }: NodeProps<InputNode>) => {
   console.log(data.value);
 
   return (
@@ -18,7 +18,9 @@ export const InputNodeUI = ({ data, id }: NodeProps<InputNode >) => {
         </div>
       </div>
 
-      <Handle type="source" position={Position.Right} id="value" />
+      <Handle type="source" position={Position.Right} id="value">
+        Value
+      </Handle>
     </div>
   );
 };

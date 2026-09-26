@@ -1,18 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
+  addEdge,
   Background,
+  Connection,
   Controls,
   Handle,
   MiniMap,
   Node,
+  Panel,
   Position,
   ReactFlow,
+  useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { nodeTypes, VangrexNode } from "@/features/nodes/node-types";
+import { nodeTypes } from "@/features/nodes/node-types";
+import { Button } from "@/components/ui/button";
+import { PlayIcon } from "lucide-react";
+import { VangrexNode } from "@/features/nodes/node-definition.types";
 
 const initialNodes: VangrexNode[] = [
   {
@@ -32,9 +39,19 @@ const initialNodes: VangrexNode[] = [
     },
   },
 ];
+const initialEdges = [
+  {
+    id: "input-output",
+    source: "input",
+    sourceHandle: "value",
+    target: "output",
+    targetHandle: "value",
+  },
+];
 
 export const Canvas = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgeChange] = useEdgesState(initialEdges);
 
   const defaultEdgeOptions = useMemo(
     () => ({
@@ -47,16 +64,32 @@ export const Canvas = () => {
     [],
   );
 
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((edges) => addEdge(connection, edges));
+    },
+    [setEdges],
+  );
+
   return (
     <div className="relative h-[calc(100vh-5.5rem)] overflow-hidden rounded-xl bg-background">
       <ReactFlow
         defaultEdgeOptions={defaultEdgeOptions}
+        edges={edges}
+        onEdgesChange={onEdgeChange}
         nodes={nodes}
         colorMode="light"
         className="bg-background"
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
+        onConnect={onConnect}
       >
+        <Panel className="">
+          <Button>
+            <PlayIcon />
+            Trigger
+          </Button>
+        </Panel>
         <Background
           gap={24}
           size={1}

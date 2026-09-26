@@ -6,8 +6,6 @@ export const inputNode = {
 
   uiComponent: InputNodeUI,
 
-  
-
   execute: ({ data }: { data: InputNodeData }) => {
     console.log("Input node executed");
     return data;

@@ -1,6 +1,6 @@
 import { Node } from "@xyflow/react";
 
-type OutputNodeData = {
+export type OutputNodeData = {
   format: "json" | "text";
 };
 

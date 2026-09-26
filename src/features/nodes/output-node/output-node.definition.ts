@@ -1,12 +1,12 @@
 import { OutputNodeUI } from "./output-node";
-import { OutputNode } from "./output-node.types";
+import { OutputNode, OutputNodeData } from "./output-node.types";
 
 export const outputNode = {
   type: "outputNode",
 
   uiComponent: OutputNodeUI,
 
-  execute: ({ data }: { data: OutputNode }) => {
+  execute: ({ data }: { data: OutputNodeData }) => {
     console.log(data);
 
     return data;

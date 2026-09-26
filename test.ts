@@ -1,14 +1,13 @@
-import { outputNode } from "@/features/canvas/components/canvas";
+import { outputNode } from "@/features/nodes/output-node/output-node.definition";
 
 async function main() {
-  const result = outputNode.execute({
+  const result = await outputNode.execute({
     data: {
       format: "text",
     },
-    input: "Hello World",
   });
 
-  console.log(result.value);
+  console.log(result);
 }
 
 main().catch((error) => console.error(error));
