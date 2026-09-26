@@ -12,41 +12,7 @@ import {
   ReactFlow,
   useNodesState,
 } from "@xyflow/react";
-import { nodeTypes } from "@/features/nodes/node-types";
-
-type InputNodeData = {
-  value: string;
-};
-
-export const inputNode = {
-  type: "inputNode",
-
-  execute: ({ data }: { data: InputNodeData }) => {
-    console.log("Input node executed");
-    return data;
-  },
-};
-
-type OutputNodeData = {
-  format: "json" | "text";
-};
-
-export const outputNode = {
-  type: "outputNode",
-
-  execute: ({ data, input }: { data: OutputNodeData; input: unknown }) => {
-    console.log("Output node executed");
-    return {
-      value: input,
-      format: data.format,
-    };
-  },
-};
-
-export type InputNode = Node<InputNodeData, "inputNode">;
-export type OutputNode = Node<OutputNodeData, "outputNode">;
-
-type VangrexNode = InputNode | OutputNode;
+import { nodeTypes, VangrexNode } from "@/features/nodes/node-types";
 
 const initialNodes: VangrexNode[] = [
   {

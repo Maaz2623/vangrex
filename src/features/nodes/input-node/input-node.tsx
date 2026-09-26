@@ -1,8 +1,8 @@
 import { ArrowDown } from "lucide-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import { type InputNode } from "@/features/canvas/components/canvas";
+import { InputNode } from "./input-node.types";
 
-export const InputNodeUI = ({ data, id }: NodeProps<InputNode>) => {
+export const InputNodeUI = ({ data, id }: NodeProps<InputNode >) => {
   console.log(data.value);
 
   return (

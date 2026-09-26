@@ -2,7 +2,7 @@ import { ArrowUp } from "lucide-react";
 
 import { Handle, Position } from "@xyflow/react";
 
-export const OutputNode = () => {
+export const OutputNodeUI = () => {
   return (
     <div className="rounded-lg border bg-background px-4 py-3 shadow-sm">
       <div className="flex items-center gap-2">
