@@ -36,7 +36,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
     handleType: "target",
   });
 
-  const nodeData = useNodesData(connections?.[0].source);
+  const nodeData = useNodesData(connections?.[0]?.source);
 
   console.log("This is the previous connected node data", nodeData);
 
