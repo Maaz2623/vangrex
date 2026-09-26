@@ -1,7 +1,7 @@
 import { Node } from "@xyflow/react";
 
 export type OutputNodeData = {
-  format: "json" | "text";
+  content: string;
 };
 
 export type OutputNode = Node<OutputNodeData, "outputNode">;

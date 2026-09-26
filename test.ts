@@ -1,12 +1,17 @@
-import { outputNode } from "@/features/nodes/output-node/output-node.definition";
+import { executeNode } from "@/features/executions/execute-node";
 
 async function main() {
-  const result = await outputNode.execute({
+  const result = executeNode({
+    id: "agentNode",
+    type: "agentNode",
+    position: {
+      x: 0,
+      y: 0,
+    },
     data: {
-      format: "text",
+      prompt: "Hi How are u?",
     },
   });
-
   console.log(result);
 }
 

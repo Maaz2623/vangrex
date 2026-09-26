@@ -16,10 +16,9 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { nodeTypes } from "@/features/nodes/node-types";
+import { nodeTypes, VangrexNode } from "@/features/nodes/node-types";
 import { Button } from "@/components/ui/button";
 import { PlayIcon } from "lucide-react";
-import { VangrexNode } from "@/features/nodes/node-definition.types";
 
 const initialNodes: VangrexNode[] = [
   {
@@ -30,20 +29,38 @@ const initialNodes: VangrexNode[] = [
       value: "Hello World",
     },
   },
+
+  {
+    id: "agentNode",
+    type: "agentNode",
+    position: { x: 350, y: 150 },
+    data: {
+      prompt: "",
+    },
+  },
+
   {
     id: "output",
     type: "outputNode",
-    position: { x: 350, y: 150 },
+    position: { x: 700, y: 150 },
     data: {
-      format: "json",
+      content: "",
     },
   },
 ];
+
 const initialEdges = [
   {
-    id: "input-output",
+    id: "input-agent",
     source: "input",
-    sourceHandle: "value",
+    sourceHandle: "output",
+    target: "agentNode",
+    targetHandle: "input",
+  },
+  {
+    id: "agent-output",
+    source: "agentNode",
+    sourceHandle: "output", // ✅
     target: "output",
     targetHandle: "value",
   },
