@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ArrowUp, Check, Copy } from "lucide-react";
 
-import {
-  Handle,
-  Position,
-  useNodeConnections,
-  useNodesData,
-} from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
 
@@ -32,18 +27,11 @@ import {
 import { OutputNodeData } from "./output-node.types";
 
 export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
-  const connections = useNodeConnections({
-    handleType: "target",
-  });
-
-  const nodeData = useNodesData(connections?.[0]?.source);
-
-  console.log("This is the previous connected node data", nodeData);
-
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const hasOutput = Boolean(data.content?.trim());
+  const content = data.content ?? "";
+  const hasOutput = Boolean(content.trim());
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -70,7 +58,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(data.content);
+    await navigator.clipboard.writeText(content);
   };
 
   const outputContent = (
@@ -93,7 +81,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
       </div>
 
       <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-6">
-        <code>{data.content}</code>
+        <code>{content}</code>
       </pre>
     </div>
   );
@@ -102,39 +90,40 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
     <>
       <div
         onDoubleClick={handleDoubleClick}
-        className={`group relative min-w-[230px] rounded-xl border bg-background shadow-sm transition-all duration-200 ${
-          hasOutput
-            ? "cursor-pointer hover:border-foreground/20 hover:shadow-md"
-            : "cursor-default"
+        className={`w-[240px] overflow-visible rounded-xl border bg-background shadow-sm transition-shadow ${
+          hasOutput ? "cursor-pointer hover:shadow-md" : "cursor-default"
         }`}
       >
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="value"
-          className="!size-3 !border-2 !border-background !bg-muted-foreground"
-        />
-
-        <span className="absolute -left-14 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
-          Value
-        </span>
-
-        <div className="flex items-center gap-3 px-4 py-3.5">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
             <ArrowUp className="size-4 text-muted-foreground" />
           </div>
 
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-none">Output</p>
+            <p className="truncate text-sm font-semibold">Output</p>
 
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Workflow output
             </p>
           </div>
         </div>
 
-        <div className="border-t" />
+        {/* Body */}
+        <div className="relative h-[90px] border-y">
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="value"
+            className="!left-0 !size-2.5 !-translate-x-1/2 !border-2 !border-background !bg-muted-foreground"
+          />
 
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
+            Value
+          </span>
+        </div>
+
+        {/* Footer */}
         <div className="px-4 py-3">
           {hasOutput ? (
             <div className="flex items-center gap-2 rounded-lg bg-emerald-500/5 px-3 py-2">
@@ -143,7 +132,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
               </div>
 
               <span className="truncate text-xs text-muted-foreground">
-                Output available · Double-click to view
+                Output available
               </span>
             </div>
           ) : (
@@ -160,6 +149,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
         </div>
       </div>
 
+      {/* Mobile */}
       {isMobile ? (
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerContent>
@@ -180,6 +170,7 @@ export const OutputNodeUI = ({ data }: { data: OutputNodeData }) => {
           </DrawerContent>
         </Drawer>
       ) : (
+        /* Desktop */
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

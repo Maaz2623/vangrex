@@ -1,17 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, File, Paperclip, Upload, X } from "lucide-react";
 
-import {
-  Handle,
-  NodeProps,
-  Position,
-  useNodeConnections,
-  useNodesData,
-  useReactFlow,
-} from "@xyflow/react";
+import { Handle, NodeProps, Position, useReactFlow } from "@xyflow/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +34,22 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { updateNode } = useReactFlow();
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    const handleChange = () => {
+      setIsMobile(mediaQuery.matches);
+    };
+
+    handleChange();
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
 
   const handleDoubleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -87,45 +95,66 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
   };
 
   const inputContent = (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Text input */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Input</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Text input</label>
 
-        <Input
-          value={data.value}
-          placeholder="Enter a value..."
-          onChange={(event) => handleValueChange(event.target.value)}
-        />
+          <span className="text-[11px] text-muted-foreground">
+            {data.value.length} characters
+          </span>
+        </div>
+
+        <div className="rounded-xl border bg-muted/20 p-1">
+          <Input
+            value={data.value}
+            placeholder="Enter the value you want to pass into the workflow..."
+            onChange={(event) => handleValueChange(event.target.value)}
+            className="h-11 border-0 bg-background shadow-sm focus-visible:ring-1"
+          />
+        </div>
+
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          This value will be available to the next connected node.
+        </p>
       </div>
 
-      {/* File upload */}
+      {/* Attachments */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Files</label>
+        <div>
+          <label className="text-sm font-medium">Attachments</label>
+
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Add files that should be included with this workflow input.
+          </p>
+        </div>
 
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className="rounded-lg border border-dashed p-6 text-center transition-colors hover:bg-muted/50"
+          className="group rounded-xl border border-dashed bg-muted/20 p-6 text-center transition-colors hover:border-foreground/20 hover:bg-muted/40"
         >
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-muted">
+          <div className="mx-auto flex size-11 items-center justify-center rounded-xl border bg-background shadow-sm transition-transform group-hover:scale-105">
             <Upload className="size-4 text-muted-foreground" />
           </div>
 
-          <p className="mt-3 text-sm font-medium">Drop files here</p>
+          <div className="mt-3">
+            <p className="text-sm font-medium">Drop files here</p>
 
-          <p className="mt-1 text-xs text-muted-foreground">
-            or choose files from your device
-          </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              or choose files from your device
+            </p>
+          </div>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="mt-4"
+            className="mt-4 h-8 gap-2"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Paperclip className="mr-2 size-3.5" />
+            <Paperclip className="size-3.5" />
             Choose files
           </Button>
 
@@ -139,18 +168,24 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
         </div>
       </div>
 
-      {/* Selected files */}
+      {/* Attached files */}
       {files.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">
-            Attached files
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">
+              Attached files
+            </p>
 
-          <div className="space-y-2">
+            <span className="text-[11px] text-muted-foreground">
+              {files.length} {files.length === 1 ? "file" : "files"}
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
             {files.map((file, index) => (
               <div
                 key={`${file.name}-${file.lastModified}-${index}`}
-                className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2"
+                className="group flex items-center gap-3 rounded-lg border bg-background px-3 py-2.5 transition-colors hover:bg-muted/30"
               >
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                   <File className="size-3.5 text-muted-foreground" />
@@ -159,7 +194,7 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium">{file.name}</p>
 
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
@@ -168,10 +203,11 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-7 shrink-0"
+                  className="size-7 shrink-0 opacity-60 transition-opacity hover:opacity-100"
                   onClick={() => removeFile(index)}
                 >
                   <X className="size-3.5" />
+
                   <span className="sr-only">Remove {file.name}</span>
                 </Button>
               </div>
@@ -184,85 +220,95 @@ export const InputNodeUI = ({ id, data }: NodeProps<InputNode>) => {
 
   return (
     <>
+      {/* Canvas Node */}
       <div
         onDoubleClick={handleDoubleClick}
-        className="group relative min-w-[230px] cursor-pointer rounded-xl border bg-background shadow-sm transition-all duration-200 hover:border-foreground/20 hover:shadow-md"
+        className="w-[240px] cursor-pointer overflow-visible rounded-xl border bg-background shadow-sm transition-shadow hover:shadow-md"
       >
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="output"
-          className="!size-3 !border-2 !border-background !bg-muted-foreground"
-        />
-
-        <span className="absolute -right-14 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
-          Value
-        </span>
-
-        <div className="flex items-center gap-3 px-4 py-3.5">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
             <ArrowDown className="size-4 text-muted-foreground" />
           </div>
 
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-none">Input</p>
+            <p className="truncate text-sm font-semibold">Input</p>
 
-            <p className="mt-1 text-xs text-muted-foreground">Workflow input</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Workflow input
+            </p>
           </div>
         </div>
 
-        <div className="border-t" />
-
-        <div className="px-4 py-3">
-          <Input
-            value={data.value}
-            placeholder="Enter a value..."
-            className="h-9 text-xs"
-            onChange={(event) => handleValueChange(event.target.value)}
-            onDoubleClick={(event) => event.stopPropagation()}
+        {/* Body */}
+        <div className="relative h-[90px] border-y">
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="output"
+            className="!right-0 !size-2.5 !translate-x-1/2"
           />
+
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
+            Output
+          </span>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Provides data to the workflow.
+          </p>
         </div>
       </div>
 
-      {/* Desktop */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-md bg-muted">
-                <ArrowDown className="size-4 text-muted-foreground" />
-              </div>
-              Workflow Input
-            </DialogTitle>
+      {/* Desktop Dialog */}
+      {!isMobile && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-xl gap-0 overflow-hidden p-0">
+            <DialogHeader className="border-b px-6 py-5">
+              <DialogTitle className="flex items-center gap-2.5">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+                  <ArrowDown className="size-4 text-muted-foreground" />
+                </div>
+                Workflow Input
+              </DialogTitle>
 
-            <DialogDescription>
-              Provide text or attach files to use as workflow input.
-            </DialogDescription>
-          </DialogHeader>
+              <DialogDescription className="pl-10">
+                Provide text or attach files to use as workflow input.
+              </DialogDescription>
+            </DialogHeader>
 
-          {inputContent}
-        </DialogContent>
-      </Dialog>
+            <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+              {inputContent}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* Mobile */}
-      <Drawer open={isMobile && open} onOpenChange={setOpen}>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
-            <DrawerTitle className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-md bg-muted">
-                <ArrowDown className="size-4 text-muted-foreground" />
-              </div>
-              Workflow Input
-            </DrawerTitle>
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent>
+            <DrawerHeader className="border-b px-4 pb-4 text-left">
+              <DrawerTitle className="flex items-center gap-2.5">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+                  <ArrowDown className="size-4 text-muted-foreground" />
+                </div>
+                Workflow Input
+              </DrawerTitle>
 
-            <DrawerDescription>
-              Provide text or attach files to use as workflow input.
-            </DrawerDescription>
-          </DrawerHeader>
+              <DrawerDescription className="pl-10">
+                Provide text or attach files to use as workflow input.
+              </DrawerDescription>
+            </DrawerHeader>
 
-          <div className="px-4 pb-6">{inputContent}</div>
-        </DrawerContent>
-      </Drawer>
+            <div className="max-h-[75vh] overflow-y-auto px-4 py-5">
+              {inputContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </>
   );
 };
